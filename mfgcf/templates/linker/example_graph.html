@@ -1,0 +1,67 @@
+<html>
+{% load static %}
+<body>
+<div id="canvas">
+</div>
+</body>
+
+<script type='text/javascript' src="{% static "js/d3.v3.min.js" %}"></script>
+<script type='text/javascript' src="{% static "js/jsnetworkx.js" %}"></script>
+
+
+<script type='text/javascript'>
+	var mf = {{ mfs | safe }}
+	var strains = {{ strains | safe }}
+	var gcf = {{ gcfs | safe }}
+	var edges = {{ edges | safe }}
+	console.log(mf)
+	var G = new jsnx.Graph();
+	
+	
+
+	G.addNodesFrom(mf,{group:'mf'})
+	// G.addNodesFrom(strains,{group:4})
+	G.addNodesFrom(gcf,{group: 'gcf'})
+	// G.addNodesFrom([1,2,3,4], {group:0});
+	// G.addNodesFrom([5,6,7], {group:1});
+	// G.addNodesFrom([8,9,10,11], {group:2});
+	 
+	// G.addPath([1,2,5,6,7,8,11]);
+	// G.addEdgesFrom([[1,3],[1,4],[3,4],[2,3],[2,4],[8,9],[8,10],[9,10],[11,10],[11,9]]);
+	 
+	G.addWeightedEdgesFrom(edges)
+	var color = d3.scale.category10();
+	jsnx.draw(G, {
+	    element: '#canvas',
+	    layoutAttr: {
+	        charge: -120,
+	        linkDistance: 20
+	    },
+	    width: 800,
+	    height: 500,
+	    nodeAttr: {
+	        r: function(d) {
+	        	if(d.data.nstrains > 0)
+		        	return 2*(1+Math.log(d.data.nstrains));
+		       	else
+		       		return 2
+	        },
+	        title: function(d) { return d.label;}
+	    },
+	    nodeStyle: {
+	        fill: function(d) { 
+	        	if(d.data.group == 'mf')
+		            return '#000000';
+		        if(d.data.group == 'gcf')
+		        	return color(d.data.gcftype);
+		       	return '#00FF00';
+	        },
+	        stroke: 'none'
+	    },
+	    edgeStyle: {
+	        fill: '#999',
+	    }
+	});
+</script>
+
+</html>

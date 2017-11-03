@@ -20,4 +20,6 @@ if __name__ == '__main__':
 	for g in gcfs:
 		g.delete()
 
-	
+	links = MFGCFEdge.objects.all()
+	for l in links:
+		l.delete()
