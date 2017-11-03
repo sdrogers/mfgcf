@@ -96,7 +96,7 @@ d3.json("/linker/get_graph/", function(error, graph) {
       document.getElementById("infodiv").innerHTML = st;
       d3.json('/linker/get_overlap_strains/'+ gcfid + '/' + mfid,function(error,strains) {
         a = document.getElementById("infodiv").innerHTML;
-        a += " (";
+        a += " " + strains.strains.length + " strains, p = " + strains.p +  " (";
         for(i = 0;i<strains.strains.length;i++) {
           a += strains.strains[i];
           if(i < strains.strains.length-1)
