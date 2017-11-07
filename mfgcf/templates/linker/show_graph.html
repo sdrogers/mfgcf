@@ -30,11 +30,18 @@ var color = d3.scaleOrdinal(d3.schemeCategory10);
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody().strength(-200).distanceMax(150).distanceMin(10))
+    .force("charge", d3.forceManyBody().strength(-15).distanceMax(150).distanceMin(10))
+    // .force("charge", d3.forceManyBody())
     .force("center", d3.forceCenter(width / 2, height / 2));
 
+// Stop the simulation and restart once the data has arrived
+simulation.stop()
 
-d3.json("/linker/get_graph/", function(error, graph) {
+d3.json("/linker/get_graph/{{analysis_id}}", function(error, graph) {
+
+
+
+
   if (error) throw error;
   
   svg.call(d3.zoom().on("zoom",redraw));
@@ -49,7 +56,7 @@ d3.json("/linker/get_graph/", function(error, graph) {
       .selectAll("line")
       .data(graph.links)
       .enter().append("line")
-      .attr("stroke-width", function(d) { return 0.5*d.weight; })
+      .attr("stroke-width", function(d) { return 0.2*d.weight; })
       .on("mouseover", showedgeinfo)
       .on("mouseout", removeinfo);
   var node = svg.append("g")
@@ -59,9 +66,9 @@ d3.json("/linker/get_graph/", function(error, graph) {
       .enter().append("circle")
       .attr("r", function(d) {
         if(d.nstrains == 0)
-          return 2;
+          return 1;
         else
-          return 2*(1+Math.log(d.nstrains));
+          return (1+Math.log(d.nstrains));
       })
       .attr("fill", function(d) { 
         if(d.nodetype == "mf")
@@ -110,10 +117,10 @@ d3.json("/linker/get_graph/", function(error, graph) {
     function showinfo(d) {
       infodiv = document.getElementById("infodiv");
       if(d.nodetype == 'mf') {
-        var st = d.id + " " + d.nstrains + " strains";
+        var st = d.id;
         infodiv.innerHTML = st;
         d3.json('/linker/get_mf_strains/' + d.dbid, function(error,strains) {
-          st = " (";
+          st = " " + strains.strains.length + " strains (";
           for(i=0;i<strains.strains.length;i++) {            
             st += strains.strains[i];
             if(i < strains.strains.length-1)
@@ -127,10 +134,10 @@ d3.json("/linker/get_graph/", function(error, graph) {
           infodiv.innerHTML = a;
         });
       }else {
-        st = d.id + " <b>" + d.gcftype+ "</b> " + d.nstrains + " strains";
+        st = d.id + " <b>" + d.gcftype+ "</b> ";
         infodiv.innerHTML = st
         d3.json('/linker/get_gcf_strains/'+d.dbid,function(error,strains) {
-          st = " (";
+          st = " " + strains.strains.length + " strains (";
           for(i=0;i<strains.strains.length;i++) {
             st += strains.strains[i];
             if(i < strains.strains.length-1)
@@ -161,7 +168,7 @@ d3.json("/linker/get_graph/", function(error, graph) {
         .attr("cy", function(d) { return d.y; });
 
     }
-
+    simulation.restart()
 });
 
 
