@@ -59,7 +59,7 @@ def get_graph(request,analysis_id):
 
     G = nx.Graph()
     mfs = MF.objects.filter(analysis = analysis)
-    gcfs = GCF.objects.filter(analysis = analysis)
+    gcfs = GCF.objects.filter(analysis = analysis,gcftype='allPKSI')
 
     strains = Strain.objects.all()
     # mfs_list = []

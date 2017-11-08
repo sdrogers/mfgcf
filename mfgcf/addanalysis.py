@@ -13,8 +13,9 @@ from linker.models import *
 
 import glob
 
+strain_id_file = 'strain_ids.csv'
 
-def load_gcf_trio(analysis,file_trio,strain_dir):
+def load_gcf_trio(analysis,file_trio,strain_dict):
 	network_file,tsv_file,annotations_file = file_trio
 	# This file includes the BGC info
 	bgc_dict = {}
@@ -31,16 +32,20 @@ def load_gcf_trio(analysis,file_trio,strain_dir):
 			bgc.save()
 			bgc_dict[bgc.name] = bgc
 			genbank_name = bgc.name.split('_')[0]
+                        if '.' in genbank_name:
+                            genbank_name = genbank_name.split('.')[0]
 			if genbank_name == 'GCA':
 				# hack!
-				genbank_name = '_'.join(bgc.name.split('_')[:6])
-
+				genbank_name = '_'.join(bgc.name.split('_')[:2])
+                                genbank_name = genbank_name.split('.')[0]
+			strain_name = None
 			if not genbank_name in strain_dict:
-				strain_name = get_strain(genbank_name,strain_dir)
-				strain_dict[genbank_name] = strain_name
+				print "{} STRAIN NOT FOUND!".format(genbank_name)
+				# strain_name = get_strain(genbank_name,strain_dir)
+				# strain_dict[genbank_name] = strain_name
 			else:
 				strain_name = strain_dict[genbank_name]
-			if not strain_dict[genbank_name] == None:
+			if not strain_name == None:
 				strain,created = Strain.objects.get_or_create(name = strain_name)
 				if created:
 					strain.organism = line[5]
@@ -206,9 +211,14 @@ if __name__ == '__main__':
 	
 	file_trios = get_files(bigscape_outout_dir)
 	strain_dict = {}
+
+	with open(strain_id_file,'r') as f:
+		reader = csv.reader(f)
+		for line in reader:
+			strain_dict[line[0]] = line[1]
 	for file_trio in file_trios:
 		print "Adding BGCs (and strains) from {}".format(file_trio[0])
-		strain_dict = load_gcf_trio(analysis,file_trio,strain_dir)
+		strain_dict = load_gcf_trio(analysis,file_trio,strain_dict)
 
 	load_mf_file(mf_file,analysis)
 
