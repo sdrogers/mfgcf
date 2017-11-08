@@ -32,12 +32,15 @@ def load_gcf_trio(analysis,file_trio,strain_dict):
 			bgc.save()
 			bgc_dict[bgc.name] = bgc
 			genbank_name = bgc.name.split('_')[0]
+                        if '.' in genbank_name:
+                            genbank_name = genbank_name.split('.')[0]
 			if genbank_name == 'GCA':
 				# hack!
-				genbank_name = '_'.join(bgc.name.split('_')[:6])
+				genbank_name = '_'.join(bgc.name.split('_')[:2])
+                                genbank_name = genbank_name.split('.')[0]
 			strain_name = None
 			if not genbank_name in strain_dict:
-				print "STRAIN NOT FOUND!"
+				print "{} STRAIN NOT FOUND!".format(genbank_name)
 				# strain_name = get_strain(genbank_name,strain_dir)
 				# strain_dict[genbank_name] = strain_name
 			else:
