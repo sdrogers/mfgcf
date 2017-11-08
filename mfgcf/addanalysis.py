@@ -133,7 +133,7 @@ def get_files(bigscape_outout_dir):
 	
 
 
-def load_mf_file(mf_file,analysis):
+def load_mf_file(mf_file,metabanalysis):
 	mfdict = {}
 	with open(mf_file,'r') as f:
 		reader = csv.reader(f,dialect='excel')
@@ -155,7 +155,7 @@ def load_mf_file(mf_file,analysis):
 		media_dict = {}
 		for media_name in MEDIA_LIST:
 			media_index_dict[media_name] = heads.index(media_name)
-			media,_ = Media.objects.get_or_create(name = media_name,analysis = analysis)
+			media,_ = Media.objects.get_or_create(name = media_name,metabanalysis = metabanalysis)
 			media_dict[media_name] = media
 
 		lines_read = 0		
@@ -163,7 +163,7 @@ def load_mf_file(mf_file,analysis):
 			if len(line[1]) == 0: # overcome weird lines at bottom
 				continue
 			suid = line[0]
-			spectrum,created = Spectrum.objects.get_or_create(suid = suid,analysis = analysis)
+			spectrum,created = Spectrum.objects.get_or_create(suid = suid,metabanalysis = metabanalysis)
 			if created:
 				spectrum.libraryid = line[libpos]
 				spectrum.link = line[linkpos]
@@ -173,7 +173,7 @@ def load_mf_file(mf_file,analysis):
 			if not len(mfnumber) == 0 and not mfnumber == '-1':
 				mfname = 'MF_{}'.format(mfnumber)
 				if not mfname in mfdict:
-					mf,created = MF.objects.get_or_create(name = mfname,analysis = analysis)
+					mf,created = MF.objects.get_or_create(name = mfname,metabanalysis = metabanalysis)
 					mfdict[mfname] = mf
 				else:
 					mf = mfdict[mfname]
@@ -207,6 +207,12 @@ if __name__ == '__main__':
 		analysis = Analysis.objects.get(name = analysis_name)
 		remove_things(analysis)
 
+	try:
+		metabanalysis = MetabAnalysis.objects.create(name = analysis_name)
+	except:
+		print "Analysis already exists"
+		metabanalysis = MetabAnalysis.objects.get(name = analysis_name)
+		# remove_things(analysis)
 
 	
 	file_trios = get_files(bigscape_outout_dir)
@@ -220,7 +226,7 @@ if __name__ == '__main__':
 		print "Adding BGCs (and strains) from {}".format(file_trio[0])
 		strain_dict = load_gcf_trio(analysis,file_trio,strain_dict)
 
-	load_mf_file(mf_file,analysis)
+	load_mf_file(mf_file,metabanalysis)
 
 	
 

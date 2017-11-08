@@ -10,6 +10,12 @@ class Analysis(models.Model):
 	def __str__(self):
 		return self.name
 
+class MetabAnalysis(models.Model):
+	name = models.CharField(unique = True,max_length = 200)
+	description = models.CharField(max_length = 2048,null=True)
+	def __str__(self):
+		return self.name
+
 class Strain(models.Model):
 	name = models.CharField(unique=True,max_length=200)
 	organism = models.CharField(max_length = 1024,null = True)
@@ -39,7 +45,7 @@ class BGCGCF(models.Model):
 
 class Spectrum(models.Model):
 	suid = models.IntegerField()
-	analysis = models.ForeignKey(Analysis,null=True)
+	metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
 	libraryid = models.CharField(max_length = 1024,null = True)
 	link = models.CharField(max_length = 1024,null=True)
 	def __str__(self):
@@ -47,7 +53,7 @@ class Spectrum(models.Model):
 
 class MF(models.Model):
 	name = models.CharField(unique=True,max_length=200)
-	analysis = models.ForeignKey(Analysis)
+	metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
 
 class BGCStrain(models.Model):
 	strain = models.ForeignKey(Strain)
@@ -64,7 +70,7 @@ class SpectrumMF(models.Model):
 
 class Media(models.Model):
 	name = models.CharField(max_length = 1024)
-	analysis = models.ForeignKey(Analysis)
+	metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
 
 class SpectrumMedia(models.Model):
 	spectrum = models.ForeignKey(Spectrum)

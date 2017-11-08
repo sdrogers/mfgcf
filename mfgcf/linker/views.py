@@ -12,8 +12,8 @@ def index(request):
     return HttpResponse("Hello")
 
 
-def show_graph(request,analysis_id):
-    context_dict = {'analysis_id':analysis_id}    
+def show_graph(request,analysis_id,metabanalysis_id):
+    context_dict = {'analysis_id':analysis_id,'metabanalysis_id':metabanalysis_id}    
     return render(request,'linker/show_graph.html',context_dict)
 
 def get_overlap_strains(request,gcf_id,mf_id):
@@ -51,17 +51,17 @@ def get_mf_strains(request,mf_id):
     straindict = {'strains':strainlist}
     return JsonResponse(straindict)
 
-def get_graph(request,analysis_id):
+def get_graph(request,analysis_id,metabanalysis_id):
     import networkx as nx
     from networkx.readwrite import json_graph
 
     analysis = Analysis.objects.get(id = analysis_id)
-
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
     G = nx.Graph()
-    mfs = MF.objects.filter(analysis = analysis)
+    mfs = MF.objects.filter(metabanalysis = metabanalysis)
     gcfs = GCF.objects.filter(analysis = analysis,gcftype='allPKSI')
 
-    strains = Strain.objects.all()
+    # strains = Strain.objects.all()
     # mfs_list = []
     # for m in mfs:
     #     # n = len(MFStrain.objects.filter(mf = m))

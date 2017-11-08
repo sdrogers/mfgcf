@@ -37,7 +37,7 @@ var simulation = d3.forceSimulation()
 // Stop the simulation and restart once the data has arrived
 simulation.stop()
 
-d3.json("/linker/get_graph/{{analysis_id}}", function(error, graph) {
+d3.json("/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}", function(error, graph) {
 
 
 
