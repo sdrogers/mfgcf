@@ -37,7 +37,7 @@ var simulation = d3.forceSimulation()
 // Stop the simulation and restart once the data has arrived
 simulation.stop()
 
-d3.json("/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}", function(error, graph) {
+d3.json("/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}/{{families}}", function(error, graph) {
 
 
 
@@ -66,10 +66,11 @@ d3.json("/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}", function(error
       .enter().append("circle")
       .attr("r", function(d) {
         if(d.nstrains == 0)
-          return 1;
+          return 2;
         else
-          return (1+Math.log(d.nstrains));
+          return 2*(1+Math.log(d.nstrains));
       })
+      .attr("stroke-width",0.1)
       .attr("fill", function(d) { 
         if(d.nodetype == "mf")
           return "#AAAAAA";
