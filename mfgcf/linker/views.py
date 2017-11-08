@@ -12,8 +12,42 @@ from linker.models import *
 from linker.forms import *
 
 def index(request):
-    return HttpResponse("Hello")
+    return render(request,'linker/index.html',{})
 
+def show_links(request,analysis_id,metabanalysis_id):
+    context_dict = {}
+    analysis = Analysis.objects.get(id = analysis_id)
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+
+    context_dict['analysis'] = analysis
+    context_dict['metabanalysis'] = metabanalysis
+
+    mfs = MF.objects.filter(metabanalysis = metabanalysis)
+    gcfs = GCF.objects.filter(analysis = analysis)
+
+    links = MFGCFEdge.objects.filter(mf__in = mfs,gcf__in = gcfs)
+
+    strain_sets = {}
+
+
+    link_list = []
+    for link in links:
+        sub_list = []
+        sub_list.append(link.mf)
+        sub_list.append(link.gcf)
+        sub_list.append(link.p)
+        if not link.mf in strain_sets:
+            strain_sets[link.mf] = get_mf_strain_set(link.mf)
+        if not link.gcf in strain_sets:
+            strain_sets[link.gcf] = get_gcf_strain_set(link.gcf)
+
+        sub_list.append(strain_sets[link.mf].union(strain_sets[link.gcf]))
+        link_list.append(sub_list)
+
+    link_list = sorted(link_list,key = lambda x: x[2])
+
+    context_dict['link_list'] = link_list
+    return render(request,'linker/show_links.html',context_dict)
 
 def show_graph(request,analysis_id,metabanalysis_id):
     context_dict = {'analysis_id':analysis_id,'metabanalysis_id':metabanalysis_id}    
@@ -39,15 +73,17 @@ def show_graph(request,analysis_id,metabanalysis_id):
 
     return render(request,'linker/graph_form.html',context_dict)
 
+def get_overlap_strain_set(gcf,mf):
+    gcf_strains = get_gcf_strain_set(gcf)
+    mf_strains = get_mf_strain_set(mf)
+    overlap = gcf_strains.intersection(mf_strains)
+    return overlap
+
 def get_overlap_strains(request,gcf_id,mf_id):
     gcf = GCF.objects.get(id = gcf_id)
     mf = MF.objects.get(id = mf_id)
     
-
-    gcf_strains = get_gcf_strain_set(gcf)
-    mf_strains = get_mf_strain_set(mf)
-
-    overlap = gcf_strains.intersection(mf_strains)
+    overlap = get_gcf_strain_set(gcf,mf)
     link = MFGCFEdge.objects.get(gcf = gcf,mf = mf)
     straindict = {'strains': [s.name for s in overlap],'p':link.p}
     return JsonResponse(straindict)
