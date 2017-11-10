@@ -9,13 +9,13 @@ django.setup()
 from linker.models import *
 
 
-def compute_h_scores(analysis):
+def compute_h_scores(analysis,metabanalysis):
     p_thresh = 0.01
 
     # find all the strains in this analysis
     bgcs = BGC.objects.filter(analysis = analysis)
     b_strains = set([item.strain for b in bgcs for item in b.bgcstrain_set.all()]) # assuming only one strain...
-    spectra = Spectrum.objects.filter(analysis = analysis)
+    spectra = Spectrum.objects.filter(metabanalysis = metabanalysis)
     s_strains = []
     s_strains = set([item.strain for s in spectra for item in s.spectrumstrain_set.all()])
     strains = b_strains.union(s_strains)
@@ -24,7 +24,7 @@ def compute_h_scores(analysis):
     # make a mf dictionary of strain sets
     print "Extracting strain sets for MFs"
     mf_dict = {}
-    mfs = MF.objects.filter(analysis = analysis)
+    mfs = MF.objects.filter(metabanalysis = metabanalysis)
     for mf in mfs:
         mf_spectra = [a.spectrum for a in mf.spectrummf_set.all()]
         mf_strains = [item.strain for s in mf_spectra for item in s.spectrumstrain_set.all()]
@@ -70,5 +70,7 @@ def compute_h_scores(analysis):
 if __name__ == '__main__':
     analysis_name = sys.argv[1]
     analysis = Analysis.objects.get(name = analysis_name)
-    compute_h_scores(analysis)
+    metabanalysis_name = sys.argv[2]
+    metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
+    compute_h_scores(analysis,metabanalysis)
     
