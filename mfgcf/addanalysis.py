@@ -52,6 +52,7 @@ def load_gcf_trio(analysis,file_trio,strain_dict):
                     strain.taxonomy = line[6]
                     strain.save()
                 BGCStrain.objects.get_or_create(bgc = bgc,strain = strain)
+
             
     
     # with open(network_file,'r') as f:
@@ -135,38 +136,57 @@ def get_files(bigscape_outout_dir):
 
 def load_mf_file(mf_file,metabanalysis):
     mfdict = {}
+    singleton_count = 0
     with open(mf_file,'r') as f:
+        # reader = csv.reader(f,dialect='excel',delimiter = '\t')
         reader = csv.reader(f,dialect='excel')
         heads = reader.next()
+        
         libpos = heads.index('LibraryID')
+
         linkpos = heads.index('ProteoSAFeClusterLink')
+
+        # mfpos = heads.index('componentindex') # sometimes this is ComponentIndex?!
         mfpos = heads.index('ComponentIndex')
+
+        ppos = heads.index('parent mass')
+
 
         strain_index_dict = {}
         strain_dict = {}
 
         for strain_name in STRAIN_LIST:
-            strain_index_dict[strain_name] = heads.index(strain_name)
-            strain,_ = Strain.objects.get_or_create(name = strain_name)
-            strain_dict[strain_name] = strain
+            try:
+                strain_pos = heads.index(strain_name)
+                strain_index_dict[strain_name] = heads.index(strain_name)
+                strain,_ = Strain.objects.get_or_create(name = strain_name)
+                strain_dict[strain_name] = strain
+
+            except:
+                pass
+
         
 
         media_index_dict = {}
         media_dict = {}
         for media_name in MEDIA_LIST:
-            media_index_dict[media_name] = heads.index(media_name)
-            media,_ = Media.objects.get_or_create(name = media_name,metabanalysis = metabanalysis)
-            media_dict[media_name] = media
+            try:
+                media_index_dict[media_name] = heads.index(media_name)
+                media,_ = Media.objects.get_or_create(name = media_name,metabanalysis = metabanalysis)
+                media_dict[media_name] = media
+            except:
+                pass
 
         lines_read = 0      
         for line in reader:
             if len(line[1]) == 0: # overcome weird lines at bottom
                 continue
             suid = line[0]
-            spectrum,created = Spectrum.objects.get_or_create(suid = suid,metabanalysis = metabanalysis)
+            spectrum,created = Spectrum.objects.get_or_create(rowid = suid,metabanalysis = metabanalysis)
             if created:
                 spectrum.libraryid = line[libpos]
                 spectrum.link = line[linkpos]
+                spectrum.parentmass = float(line[ppos])
                 spectrum.save()
             
             mfnumber = line[mfpos]
@@ -178,6 +198,13 @@ def load_mf_file(mf_file,metabanalysis):
                 else:
                     mf = mfdict[mfname]
                 SpectrumMF.objects.get_or_create(spectrum = spectrum,mf = mf)
+            else:
+                # singleton - still save but have to make a special name
+                mfname = 'MF_S_{}'.format(singleton_count)
+                singleton_count += 1
+                mf,created = MF.objects.get_or_create(name = mfname,metabanalysis = metabanalysis)
+                mfdict[mfname] = mf
+                SpectrumMF.objects.get_or_create(spectrum = spectrum,mf = mf)                
 
             for strain_name in strain_index_dict:
                 count = int(line[strain_index_dict[strain_name]])
@@ -196,9 +223,10 @@ def remove_things(analysis):
 
 if __name__ == '__main__':
     analysis_name = sys.argv[1]
-    bigscape_outout_dir = sys.argv[2]
-    mf_file = sys.argv[3]
-    strain_dir = sys.argv[4]
+    metabanalysis_name = sys.argv[2]
+    bigscape_outout_dir = sys.argv[3]
+    mf_file = sys.argv[4]
+    # strain_dir = sys.argv[4]
 
     try:
         analysis = Analysis.objects.create(name = analysis_name)
@@ -208,10 +236,10 @@ if __name__ == '__main__':
         remove_things(analysis)
 
     try:
-        metabanalysis = MetabAnalysis.objects.create(name = analysis_name)
+        metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
     except:
         print "Analysis already exists"
-        metabanalysis = MetabAnalysis.objects.get(name = analysis_name)
+        metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
         # remove_things(analysis)
 
     

@@ -12,7 +12,25 @@ from linker.models import *
 from linker.forms import *
 
 def index(request):
-    return render(request,'linker/index.html',{})
+    analyses = Analysis.objects.all()
+    context_dict = {'analyses': analyses}
+    return render(request,'linker/index.html',context_dict)
+
+def show_analysis(request,analysis_id):
+    analysis = Analysis.objects.get(id = analysis_id)
+    context_dict = {}
+    context_dict['analysis'] = analysis
+    metabanalyses = MetabAnalysis.objects.all()
+    context_dict['metabanalyses'] = metabanalyses
+    return render(request,'linker/analysis.html',context_dict)
+
+def menu(request,analysis_id,metabanalysis_id):
+    analysis = Analysis.objects.get(id = analysis_id)
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    context_dict = {}
+    context_dict['analysis'] = analysis
+    context_dict['metabanalysis'] = metabanalysis
+    return render(request,'linker/menu.html',context_dict)    
 
 def show_links(request,analysis_id,metabanalysis_id):
     context_dict = {}
@@ -48,6 +66,34 @@ def show_links(request,analysis_id,metabanalysis_id):
 
     context_dict['link_list'] = link_list
     return render(request,'linker/show_links.html',context_dict)
+
+def showgcf(request,gcf_id):
+    gcf = GCF.objects.get(id = gcf_id)
+    context_dict = {}
+    context_dict['gcf'] = gcf
+    context_dict['strains'] = get_gcf_strain_set(gcf)
+    bgc = [b.bgc for b in gcf.bgcgcf_set.all()]
+    strain = [b.bgcstrain_set.all()[0].strain for b in bgc]
+    context_dict['bgc'] = zip(bgc,strain)
+
+    context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf)
+
+    return render(request,'linker/showgcf.html',context_dict)
+
+def showmf(request,mf_id):
+    mf = MF.objects.get(id = mf_id)
+    context_dict = {}
+    context_dict['mf'] = mf
+    context_dict['strains'] = get_mf_strain_set(mf)
+    spectra = [s.spectrum for s in mf.spectrummf_set.all()]
+    spec_strains = []
+    for s in spectra:
+        spec_strains.append([st.strain for st in s.spectrumstrain_set.all()])
+    context_dict['spectra'] = zip(spectra,spec_strains)
+
+    context_dict['links'] = MFGCFEdge.objects.filter(mf = mf)
+
+    return render(request,'linker/showmf.html',context_dict)
 
 def show_graph(request,analysis_id,metabanalysis_id):
     context_dict = {'analysis_id':analysis_id,'metabanalysis_id':metabanalysis_id}    
