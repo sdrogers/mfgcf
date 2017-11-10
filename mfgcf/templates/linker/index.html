@@ -1,0 +1,10 @@
+<html>
+
+<h3>Choose a Bigscape analysis</h3>
+<ul>
+	{% for analysis in analyses %}
+		<li><a href="/linker/analysis/{{analysis.id}}">{{analysis.name}}</a>
+	{% endfor %}
+</ul>
+
+</html>
