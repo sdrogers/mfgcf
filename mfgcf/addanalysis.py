@@ -235,12 +235,12 @@ if __name__ == '__main__':
         analysis = Analysis.objects.get(name = analysis_name)
         remove_things(analysis)
 
-    try:
-        metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
-    except:
-        print "Analysis already exists"
-        metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
-        # remove_things(analysis)
+    # try:
+    #     metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
+    # except:
+    #     print "Analysis already exists"
+    #     metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
+    #     # remove_things(analysis)
 
     
     file_trios = get_files(bigscape_outout_dir)
@@ -254,7 +254,7 @@ if __name__ == '__main__':
         print "Adding BGCs (and strains) from {}".format(file_trio[0])
         strain_dict = load_gcf_trio(analysis,file_trio,strain_dict)
 
-    load_mf_file(mf_file,metabanalysis)
+    # load_mf_file(mf_file,metabanalysis)
 
     
 
