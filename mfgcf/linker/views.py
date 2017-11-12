@@ -129,7 +129,7 @@ def get_overlap_strains(request,gcf_id,mf_id):
     gcf = GCF.objects.get(id = gcf_id)
     mf = MF.objects.get(id = mf_id)
     
-    overlap = get_gcf_strain_set(gcf,mf)
+    overlap = get_overlap_strain_set(gcf,mf)
     link = MFGCFEdge.objects.get(gcf = gcf,mf = mf)
     straindict = {'strains': [s.name for s in overlap],'p':link.p}
     return JsonResponse(straindict)
