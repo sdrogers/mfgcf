@@ -24,7 +24,7 @@ def compute_h_scores(analysis,metabanalysis):
     # make a mf dictionary of strain sets
     print "Extracting strain sets for MFs"
     mf_dict = {}
-    mfs = MF.objects.filter(metabanalysis = metabanalysis)
+    mfs = MF.objects.filter(metabanalysis = metabanalysis,name__startswith='MF_S')
     for mf in mfs:
         mf_spectra = [a.spectrum for a in mf.spectrummf_set.all()]
         mf_strains = [item.strain for s in mf_spectra for item in s.spectrumstrain_set.all()]
@@ -54,15 +54,16 @@ def compute_h_scores(analysis,metabanalysis):
             just_in_gcf = gcf_strains - mf_strains
             union = gcf_strains.union(mf_strains)
             overlap = gcf_strains.intersection(mf_strains)
-            # compute the probability of getting overlap or more if the mf define the urn
-            a = 0
-            for x in range(len(overlap),n_gcf_strains+1):
-                a += hypergeom.pmf(x,n_strains,n_mf_strains,n_gcf_strains)
-            if a<= p_thresh:
-                e,b = MFGCFEdge.objects.get_or_create(mf = mf,gcf = gcf)
-                e.p = a
-                e.save()
-                # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
+            if len(overlap)> 0:
+                # compute the probability of getting overlap or more if the mf define the urn
+                a = 0
+                for x in range(len(overlap),n_gcf_strains+1):
+                    a += hypergeom.pmf(x,n_strains,n_mf_strains,n_gcf_strains)
+                if a<= p_thresh:
+                    e,b = MFGCFEdge.objects.get_or_create(mf = mf,gcf = gcf)
+                    e.p = a
+                    e.save()
+                    # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
         n_mf_done += 1
         if n_mf_done % 1 == 0:
             print "Done {} of {}".format(n_mf_done,len(mf_dict))

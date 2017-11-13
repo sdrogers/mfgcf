@@ -1,0 +1,23 @@
+<html>
+<h3>MF: {{mf.name}} from {{mf.metabanalysis.name}}</h3>
+<h4>Strains</h4>
+<ul>
+	{% for s in strains %}
+		<li>{{s.name}}, {{s.taxonomy}}, {{s.organism}}</li>
+	{% endfor %}
+</ul>
+<h4>Spectra:</h4>
+<ul>
+	{% for s in spectra %}
+		<li>{{s.0.suid}}, {{s.0.libraryid}}, {% if s.0.link %}<a href="{{s.0.link}}">link</a>{% endif %}, {% for st in s.1 %} {{st.name}}&nbsp; {% endfor %}</li>
+	{% endfor %}
+</ul>
+
+<h4>Significant links</h4>
+<ul>
+	{% for l in links %}
+		<li><a href="/linker/showgcf/{{l.gcf.id}}">{{l.gcf.name}}</a>, {{l.gcf.analysis.name}}, {{l.p}}</li>
+	{% endfor %}
+</ul>
+
+</html>

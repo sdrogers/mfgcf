@@ -26,7 +26,7 @@ class Strain(models.Model):
 
 
 class BGC(models.Model):
-	name = models.CharField(unique=True,max_length=200)
+	name = models.CharField(max_length=200)
 	analysis = models.ForeignKey(Analysis,null=True)
 	accession = models.CharField(max_length=200,null=True)
 	description= models.CharField(max_length=1024,null=True)
@@ -35,7 +35,7 @@ class BGC(models.Model):
 
 
 class GCF(models.Model):
-	name = models.CharField(unique=True,max_length=200)
+	name = models.CharField(max_length=200)
 	gcftype = models.CharField(max_length=200,null=True)
 	analysis = models.ForeignKey(Analysis)
 
@@ -44,15 +44,15 @@ class BGCGCF(models.Model):
 	gcf = models.ForeignKey(GCF)
 
 class Spectrum(models.Model):
-	suid = models.IntegerField()
+	rowid = models.IntegerField()
 	metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
 	libraryid = models.CharField(max_length = 1024,null = True)
 	link = models.CharField(max_length = 1024,null=True)
 	def __str__(self):
-		return "{},{},{}".format(self.suid,str(self.analysis),self.libraryid)
+		return "{},{},{}".format(self.rowid,str(self.analysis),self.libraryid)
 
 class MF(models.Model):
-	name = models.CharField(unique=True,max_length=200)
+	name = models.CharField(max_length=200)
 	metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
 
 class BGCStrain(models.Model):
@@ -63,6 +63,7 @@ class SpectrumStrain(models.Model):
 	spectrum = models.ForeignKey(Spectrum)
 	strain = models.ForeignKey(Strain)
 	count = models.IntegerField()
+	parentmass = models.FloatField(null = True)
 
 class SpectrumMF(models.Model):
 	spectrum = models.ForeignKey(Spectrum)

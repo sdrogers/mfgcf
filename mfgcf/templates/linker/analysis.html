@@ -1,0 +1,10 @@
+<html>
+
+<h3>Analysis: {{analysis.name}}</h3>
+	<h4>Choose a MF analysis</h4>
+	<ul>
+		{% for ma in metabanalyses %}
+			<li><a href="/linker/menu/{{analysis.id}}/{{ma.id}}">{{ma.name}}</a></li>
+		{% endfor %}
+	</ul>
+</html>
