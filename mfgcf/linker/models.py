@@ -48,8 +48,9 @@ class Spectrum(models.Model):
 	metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
 	libraryid = models.CharField(max_length = 1024,null = True)
 	link = models.CharField(max_length = 1024,null=True)
+        parentmass = models.FloatField(null=True)
 	def __str__(self):
-		return "{},{},{}".format(self.rowid,str(self.analysis),self.libraryid)
+		return "{},{},{}".format(self.rowid,str(self.metabanalysis),self.libraryid)
 
 class MF(models.Model):
 	name = models.CharField(max_length=200)
