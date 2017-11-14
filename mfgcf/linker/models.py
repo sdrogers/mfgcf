@@ -49,6 +49,7 @@ class Spectrum(models.Model):
 	libraryid = models.CharField(max_length = 1024,null = True)
 	link = models.CharField(max_length = 1024,null=True)
         parentmass = models.FloatField(null=True)
+        precursormass = models.FloatField(null=True)
 	def __str__(self):
 		return "{},{},{}".format(self.rowid,str(self.metabanalysis),self.libraryid)
 

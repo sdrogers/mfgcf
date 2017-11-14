@@ -5,6 +5,7 @@ django.setup()
 
 from linker.models import *
 
+from django.db import transaction
 
 if __name__ == '__main__':
   metabanalysis = MetabAnalysis.objects.get(name = 'duncanM')
@@ -17,13 +18,22 @@ if __name__ == '__main__':
   with open(filename,'r') as f:
     reader = csv.reader(f,delimiter = '\t',dialect = 'excel')
     heads = reader.next()
-    print heads[:10]
+    print heads
+    sys.exit(0)
     ppos = heads.index('parent mass')
+
+    prpos = heads.index('precursor mass')
     spos = heads.index('cluster index')
+    spos = 0
     libpos = heads.index('LibraryID')
-    for line in reader:
-        pm = float(line[ppos])
+    n_done = 0
+    with transaction.atomic():
+      for line in reader:
+        pm = float(line[prpos])
         spec = spec_dict[int(line[spos])]
-        spec.parentmass = pm
+        spec.precursormass = pm
         spec.save()
+        n_done += 1
+        if n_done%1000 == 0:
+            print n_done
 
