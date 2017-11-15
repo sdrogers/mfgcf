@@ -1,0 +1,11 @@
+<html>
+
+<h3>MetabAnalysis: {{metabanalysis.name}}</h3>
+	<div><a href="/linker/spectra/{{metabanalysis.id}}">show spectra</a></div>
+	<h4>Choose a GCF analysis</h4>
+	<ul>
+		{% for a in analyses %}
+			<li><a href="/linker/menu/{{a.id}}/{{metabanalysis.id}}">{{a.name}}</a></li>
+		{% endfor %}
+	</ul>
+</html>
