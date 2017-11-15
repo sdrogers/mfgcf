@@ -7,4 +7,12 @@
 	{% endfor %}
 </ul>
 
+
+<h3>Choose a Molecular Networking analysis</h3>
+<ul>
+	{% for m in metabanalyses %}
+		<li><a href="/linker/metabanalysis/{{m.id}}">{{m.name}}</a>
+	{% endfor %}
+</ul>
+
 </html>

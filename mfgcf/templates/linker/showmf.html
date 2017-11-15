@@ -9,7 +9,7 @@
 <h4>Spectra:</h4>
 <ul>
 	{% for s in spectra %}
-		<li>{{s.0.suid}}, {{s.0.libraryid}}, {% if s.0.link %}<a href="{{s.0.link}}">link</a>{% endif %}, {% for st in s.1 %} {{st.name}}&nbsp; {% endfor %}</li>
+		<li>{{s.0.rowid}}, {{s.0.libraryid}}, {% if s.0.link %}<a href="{{s.0.link}}">link</a>{% endif %}, {% for st in s.1 %} {{st.name}}&nbsp; {% endfor %}</li>
 	{% endfor %}
 </ul>
 

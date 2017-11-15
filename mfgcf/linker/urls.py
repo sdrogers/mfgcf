@@ -13,6 +13,8 @@ urlpatterns = [
 	url(r'^showgcf/(?P<gcf_id>\w+)$',views.showgcf,name = 'showgcf'),
 	url(r'^showmf/(?P<mf_id>\w+)$',views.showmf,name = 'showmf'),
 	url(r'^analysis/(?P<analysis_id>\w+)$',views.show_analysis,name = 'show_analysis'),
+	url(r'^metabanalysis/(?P<metabanalysis_id>\w+)$',views.show_metabanalysis,name = 'show_metabanalysis'),
+	url(r'^spectra/(?P<metabanalysis_id>\w+)$',views.show_spectra,name = 'show_spectra'),
 	url(r'^menu/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)$', views.menu,name='menu'),
 ]
 

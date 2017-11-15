@@ -14,6 +14,8 @@ from linker.forms import *
 def index(request):
     analyses = Analysis.objects.all()
     context_dict = {'analyses': analyses}
+    metabanalyses = MetabAnalysis.objects.all()
+    context_dict['metabanalyses'] = metabanalyses
     return render(request,'linker/index.html',context_dict)
 
 def show_analysis(request,analysis_id):
@@ -23,6 +25,27 @@ def show_analysis(request,analysis_id):
     metabanalyses = MetabAnalysis.objects.all()
     context_dict['metabanalyses'] = metabanalyses
     return render(request,'linker/analysis.html',context_dict)
+
+def show_spectra(request,metabanalysis_id):
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    spectra = Spectrum.objects.filter(metabanalysis = metabanalysis)
+    mfs = []
+    for s in spectra:
+        mfs.append(s.spectrummf_set.all()[0].mf)
+    spectra = zip(spectra,mfs)
+    context_dict = {}
+    context_dict['metabanalysis'] = metabanalysis
+    context_dict['spectra'] = spectra
+    return render(request,'linker/spectra.html',context_dict)
+
+def show_metabanalysis(request,metabanalysis_id):
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    analyses = Analysis.objects.all()
+    context_dict = {}
+    context_dict['metabanalysis'] = metabanalysis
+    context_dict['analyses'] = analyses
+
+    return render(request,'linker/metabanalysis.html',context_dict)
 
 def menu(request,analysis_id,metabanalysis_id):
     analysis = Analysis.objects.get(id = analysis_id)
