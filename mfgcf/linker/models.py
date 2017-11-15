@@ -24,14 +24,22 @@ class Strain(models.Model):
 		return self.name
 
 
+class MiBIG(models.Model):
+	name = models.CharField(max_length = 100,unique = True)
+	product = models.CharField(max_length = 1024)
+	bgcclass = models.CharField(max_length=200,null=True)
+	url = models.CharField(max_length=1024,null=True)
+	organism = models.CharField(max_length=200,null=True)
+
 
 class BGC(models.Model):
 	name = models.CharField(max_length=200)
 	analysis = models.ForeignKey(Analysis,null=True)
 	accession = models.CharField(max_length=200,null=True)
-	description= models.CharField(max_length=1024,null=True)
+	description = models.CharField(max_length=1024,null=True)
 	product = models.CharField(max_length=200,null=True)
-	bgsclass = models.CharField(max_length=200,null=True)
+	bgcclass = models.CharField(max_length=200,null=True)
+	mibig = models.ForeignKey(MiBIG,null=True)
 
 
 class GCF(models.Model):
