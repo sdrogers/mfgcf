@@ -25,7 +25,7 @@ def compute_h_scores(analysis,metabanalysis):
     print "Extracting strain sets for MFs"
     mf_dict = {}
     mfs = MF.objects.filter(metabanalysis = metabanalysis)
-    mfs = filter(lambda x: not x.name.startswith('MF_S'),mfs)
+    # mfs = filter(lambda x: not x.name.startswith('MF_S'),mfs)
 
     for mf in mfs:
         mf_spectra = [a.spectrum for a in mf.spectrummf_set.all()]
@@ -33,7 +33,7 @@ def compute_h_scores(analysis,metabanalysis):
         mf_dict[mf] = set(mf_strains) 
 
     # make a gcf dictionary of strain sets
-    print "Extractig strain sets for GCFs"
+    print "Extracting strain sets for GCFs"
     gcf_dict = {}
     gcfs = GCF.objects.filter(analysis = analysis)
     for gcf in gcfs:
