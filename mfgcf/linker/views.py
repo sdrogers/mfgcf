@@ -24,6 +24,8 @@ def show_analysis(request,analysis_id):
     context_dict['analysis'] = analysis
     metabanalyses = MetabAnalysis.objects.all()
     context_dict['metabanalyses'] = metabanalyses
+    gcfs = GCF.objects.filter(analysis = analysis)
+    context_dict['gcfs'] = gcfs
     return render(request,'linker/analysis.html',context_dict)
 
 def show_spectra(request,metabanalysis_id):
