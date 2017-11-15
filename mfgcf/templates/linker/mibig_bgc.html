@@ -1,0 +1,30 @@
+<html>
+
+<h3>MiBIG BGCs: {{mibig_bgc.name}}</h3>
+
+<div>Name: {{mibig_bgc.name}}</div>
+<div>Product: {{mibig_bgc.product}}</div>
+<div>Class: {{mibig_bgc.bgcclass}}</div>
+<div><a href="{{mibig_bgc.url}}" target="_blank">MiBIG page</a></div>
+
+<h3>Instances</h3>
+
+
+
+<table border=1>
+	<thead>
+		<tr><th>Name</th><th>Analysis</th><th>Product</th><th>GCF</th></tr>
+	</thead>
+	<tbody>
+		{% for b in bgcs %}
+			<tr>
+				<td>{{b.0.name}}</td>
+				<td>{{b.0.analysis.name}}</td>
+				<td>{{b.0.product}}</td>
+				<td><a href="/linker/showgcf/{{b.1.id}}" target="_blank">{{b.1.name}}</a></td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+</html>

@@ -90,13 +90,36 @@ def show_links(request,analysis_id,metabanalysis_id):
     context_dict['link_list'] = link_list
     return render(request,'linker/show_links.html',context_dict)
 
+def show_mibig(request):
+    context_dict = {}
+    mb = MiBIG.objects.all()
+    context_dict['mb'] = mb
+    return render(request,'linker/mibig.html',context_dict)
+
+def show_mibig_bgc(request,mibig_id):
+    mibig = MiBIG.objects.get(id = mibig_id)
+    context_dict = {}
+    context_dict['mibig_bgc'] = mibig
+    bgcs = mibig.bgc_set.all()
+    gcfs = []
+    for b in bgcs:
+        gcfs.append(b.bgcgcf_set.all()[0].gcf)
+    context_dict['bgcs'] = zip(bgcs,gcfs)
+    return render(request,'linker/mibig_bgc.html',context_dict)
+
 def showgcf(request,gcf_id):
     gcf = GCF.objects.get(id = gcf_id)
     context_dict = {}
     context_dict['gcf'] = gcf
     context_dict['strains'] = get_gcf_strain_set(gcf)
     bgc = [b.bgc for b in gcf.bgcgcf_set.all()]
-    strain = [b.bgcstrain_set.all()[0].strain for b in bgc]
+    strain = []
+    for b in bgc:
+        try:
+            strain.append(b.bgcstrain_set.all()[0].strain)
+        except:
+            # doesnt have a strain -- probably from mibig
+            strain.append(None)
     context_dict['bgc'] = zip(bgc,strain)
 
     context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf)
@@ -113,8 +136,14 @@ def showmf(request,mf_id):
     for s in spectra:
         spec_strains.append([st.strain for st in s.spectrumstrain_set.all()])
     context_dict['spectra'] = zip(spectra,spec_strains)
+    
+    links = MFGCFEdge.objects.filter(mf = mf).order_by('p')
+    mibig = []
+    for l in links:
+        mibig.append(l.gcf.mibig)
 
-    context_dict['links'] = MFGCFEdge.objects.filter(mf = mf)
+    
+    context_dict['links'] = zip(links,mibig)
 
     return render(request,'linker/showmf.html',context_dict)
 

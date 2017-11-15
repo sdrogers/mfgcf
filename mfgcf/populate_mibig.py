@@ -28,7 +28,7 @@ if __name__ == '__main__':
 				url = "https://mibig.secondarymetabolites.org/repository/{}/index.html#cluster-1".format(name)
 				mibig.url = url
 				mibig.save()
-				bgcs = BGC.objects.filter(name = name)
+				bgcs = BGC.objects.filter(name__startswith = name)
 				for b in bgcs:
 					b.mibig = mibig
 					b.save()

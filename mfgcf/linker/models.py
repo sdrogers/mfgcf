@@ -30,6 +30,8 @@ class MiBIG(models.Model):
 	bgcclass = models.CharField(max_length=200,null=True)
 	url = models.CharField(max_length=1024,null=True)
 	organism = models.CharField(max_length=200,null=True)
+	def __str__(self):
+		return "{}: {}".format(self.name,self.product)
 
 
 class BGC(models.Model):
@@ -46,6 +48,20 @@ class GCF(models.Model):
 	name = models.CharField(max_length=200)
 	gcftype = models.CharField(max_length=200,null=True)
 	analysis = models.ForeignKey(Analysis)
+
+	@property
+	def mibig(self):
+		bgc = [b.bgc for b in self.bgcgcf_set.all()]
+		mibig = None
+		for b in bgc:
+			if b.mibig:
+				if not mibig:
+					mibig = []
+				mibig.append(b.mibig)
+		return mibig
+
+
+
 
 class BGCGCF(models.Model):
 	bgc = models.ForeignKey(BGC)
