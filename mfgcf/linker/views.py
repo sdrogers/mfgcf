@@ -274,7 +274,8 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     nodes = {}
     p_thresh = 0.01
     links = MFGCFEdge.objects.filter(p__lte = p_thresh,mf__in = mfs,gcf__in = gcfs)
-    links = MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
+    links += MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
+    print "{},{},found {} links".format(analysis,metabanalysis,len(links))
     links = list(set(links))
     for link in links:
         if not link.mf.name in nodes:
