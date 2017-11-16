@@ -112,3 +112,4 @@ class MFGCFEdge(models.Model):
 	mf = models.ForeignKey(MF)
 	gcf = models.ForeignKey(GCF)
 	p = models.FloatField(null = True)
+	validated = models.BooleanField(default = False)

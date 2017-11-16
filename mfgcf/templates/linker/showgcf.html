@@ -16,7 +16,7 @@
 <h4>Significant links</h4>
 <ul>
 	{% for l in links %}
-		<li><a href="/linker/showmf/{{l.mf.id}}">{{l.mf.name}}</a>, {{l.mf.metabanalysis.name}}, {{l.p}}</li>
+		<li><a href="/linker/showmf/{{l.mf.id}}">{{l.mf.name}}</a>, {{l.mf.metabanalysis.name}}, {{l.p}}, Validated = <a href="/linker/validate_from_gcf/{{l.id}}">{{l.validated}}</a></li>
 	{% endfor %}
 </ul>
 </html>

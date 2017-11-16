@@ -17,7 +17,7 @@
 		<tbody>
 			{% for gcf in gcfs %}
 				<tr>
-					<td><a href="/linker/{{gcf.id}}" target="_blank">{{gcf.name}}</a></td>
+					<td><a href="/linker/showgcf/{{gcf.id}}" target="_blank">{{gcf.name}}</a></td>
 					<td>{{gcf.gcftype}}</td>
 					<td>{% for m in gcf.mibig %}<a href="{{m.url}}" target="_blank">{{m.name}} ({{m.product}})</a>&nbsp;{% endfor %}</td>
 				</tr>

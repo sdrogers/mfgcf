@@ -57,6 +57,24 @@ def menu(request,analysis_id,metabanalysis_id):
     context_dict['metabanalysis'] = metabanalysis
     return render(request,'linker/menu.html',context_dict)    
 
+def validate_from_mf(request,link_id):
+    link = MFGCFEdge.objects.get(id = link_id)
+    if link.validated:
+        link.validated = False
+    else:
+        link.validated = True
+    link.save()
+    return showmf(request,link.mf.id)
+
+def validate_from_gcf(request,link_id):
+    link = MFGCFEdge.objects.get(id = link_id)
+    if link.validated:
+        link.validated = False
+    else:
+        link.validated = True
+    link.save()
+    return showgcf(request,link.gcf.id)
+
 def show_links(request,analysis_id,metabanalysis_id):
     context_dict = {}
     analysis = Analysis.objects.get(id = analysis_id)
@@ -265,7 +283,7 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
             # n = 10
             G.add_node(link.gcf.name,nstrains = n,gcftype = link.gcf.gcftype,nodetype='gcf',dbid = link.gcf.id)
             nodes[link.gcf.name] = True
-        G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p))
+        G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p),validated = link.validated)
     
 
     
