@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse,JsonResponse,HttpResponseRedirect
 from scipy.stats import hypergeom
 # Create your views here.
 import json
@@ -64,7 +64,7 @@ def validate_from_mf(request,link_id):
     else:
         link.validated = True
     link.save()
-    return showmf(request,link.mf.id)
+    return HttpResponseRedirect("/linker/showmf/{}".format(link.mf.id))
 
 def validate_from_gcf(request,link_id):
     link = MFGCFEdge.objects.get(id = link_id)
@@ -73,7 +73,9 @@ def validate_from_gcf(request,link_id):
     else:
         link.validated = True
     link.save()
-    return showgcf(request,link.gcf.id)
+    print request.path_info
+    print request.META.get('HTTP_')
+    return HttpResponseRedirect("/linker/showgcf/{}".format(link.gcf.id))
 
 def show_links(request,analysis_id,metabanalysis_id):
     context_dict = {}
