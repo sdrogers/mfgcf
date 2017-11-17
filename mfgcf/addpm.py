@@ -30,6 +30,7 @@ if __name__ == '__main__':
     with transaction.atomic():
       for line in reader:
         print line,len(line),len(heads)
+        print line[ppos],line[prpos],line[spos]
         par = float(line[ppos])
         pre = float(line[prpos])
         spec = spec_dict[int(line[spos])]

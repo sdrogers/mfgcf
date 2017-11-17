@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse,JsonResponse,HttpResponseRedirect
 from scipy.stats import hypergeom
 # Create your views here.
 import json
@@ -64,7 +64,7 @@ def validate_from_mf(request,link_id):
     else:
         link.validated = True
     link.save()
-    return showmf(request,link.mf.id)
+    return HttpResponseRedirect("/linker/showmf/{}".format(link.mf.id))
 
 def validate_from_gcf(request,link_id):
     link = MFGCFEdge.objects.get(id = link_id)
@@ -73,7 +73,9 @@ def validate_from_gcf(request,link_id):
     else:
         link.validated = True
     link.save()
-    return showgcf(request,link.gcf.id)
+    print request.path_info
+    print request.META.get('HTTP_')
+    return HttpResponseRedirect("/linker/showgcf/{}".format(link.gcf.id))
 
 def show_links(request,analysis_id,metabanalysis_id):
     context_dict = {}
@@ -142,7 +144,7 @@ def showgcf(request,gcf_id):
             strain.append(None)
     context_dict['bgc'] = zip(bgc,strain)
 
-    context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf)
+    context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf).order_by('p')
 
     return render(request,'linker/showgcf.html',context_dict)
 
@@ -272,6 +274,9 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     nodes = {}
     p_thresh = 0.01
     links = MFGCFEdge.objects.filter(p__lte = p_thresh,mf__in = mfs,gcf__in = gcfs)
+    links += MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
+    print "{},{},found {} links".format(analysis,metabanalysis,len(links))
+    links = list(set(links))
     for link in links:
         if not link.mf.name in nodes:
             n = len(get_mf_strain_set(link.mf))

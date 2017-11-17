@@ -10,7 +10,7 @@ from linker.models import *
 from django.db import transaction
 
 def compute_h_scores(analysis,metabanalysis):
-    p_thresh = 0.01
+    p_thresh = 0.05
 
     # find all the strains in this analysis
     bgcs = BGC.objects.filter(analysis = analysis)
