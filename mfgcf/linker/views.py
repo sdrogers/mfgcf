@@ -18,6 +18,12 @@ def index(request):
     context_dict['metabanalyses'] = metabanalyses
     return render(request,'linker/index.html',context_dict)
 
+def show_validated(request):
+    context_dict = {}
+    vlinks = MFGCFEdge.objects.filter(validated = True)
+    context_dict['vlinks'] = vlinks
+    return render(request,'linker/vlinks.html',context_dict)
+
 def show_analysis(request,analysis_id):
     analysis = Analysis.objects.get(id = analysis_id)
     context_dict = {}
@@ -274,9 +280,10 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     nodes = {}
     p_thresh = 0.01
     links = MFGCFEdge.objects.filter(p__lte = p_thresh,mf__in = mfs,gcf__in = gcfs)
-    links += MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
+    links2 = MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
+    links = list(set(list(links)+list(links2)))
     print "{},{},found {} links".format(analysis,metabanalysis,len(links))
-    links = list(set(links))
+    # links = list(set(links))
     for link in links:
         if not link.mf.name in nodes:
             n = len(get_mf_strain_set(link.mf))

@@ -1,0 +1,20 @@
+<html>
+	<h4>All validated links</h4>
+
+	<table border=1>
+		<thead>
+			<tr><th>ID</th><th>MF (analysis)</th><th>Library IDs</th><th>GCF (analysis)</th><td>MiBIG</td></tr>
+		</thead>
+		<tbody>
+			{% for link in vlinks %}
+			<tr>
+				<td>{{link.id}}</td>
+				<td><a href="/linker/showmf/{{link.mf.id}}">{{link.mf.name}}</a> ({{link.mf.metabanalysis}})</td>
+				<td>{% for l in link.mf.libid %} {{l}} &nbsp; {%endfor%}</td>
+				<td><a href="/linker/showgcf/{{link.gcf.id}}">{{link.gcf.name}}</a> ({{link.gcf.analysis}})</td>
+				<td>{{link.gcf.mibig}}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</html>
