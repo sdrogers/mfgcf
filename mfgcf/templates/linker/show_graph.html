@@ -4,7 +4,7 @@
 <style>
 
 .links line {
-  stroke: #999;
+  /*stroke: #999;*/
   stroke-opacity: 0.6;
 }
 
@@ -57,7 +57,21 @@ d3.json("/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}/{{families}}", f
       .selectAll("line")
       .data(graph.links)
       .enter().append("line")
-      .attr("stroke-width", function(d) { return 0.2*d.weight; })
+      .attr("stroke-width", function(d) { 
+        if(d.validated)
+        {
+          return 0.4*d.weight;
+        }
+        else
+          return 0.2*d.weight;
+         })
+      .attr("stroke",function(d) {
+        if(d.validated) {
+          return "red";
+        }else {
+          return "#999";
+        }
+      })
       .on("mouseover", showedgeinfo)
       .on("mouseout", removeinfo);
   var node = svg.append("g")

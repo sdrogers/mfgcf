@@ -9,14 +9,14 @@
 <h4>BGCs:</h4>
 <ul>
 	{% for b in bgc %}
-		<li>{{b.0.name}}, {{b.0.product}}, {{b.1.name}}</li>
+		<li>{{b.0.name}}, {{b.0.product}}, {{b.1.name}} {% if b.0.mibig %} <A href="{{b.0.mibig.url}}" target="_blank">{{b.0.mibig}} </A>{% endif %}</li>
 	{% endfor %}
 </ul>
 
 <h4>Significant links</h4>
 <ul>
 	{% for l in links %}
-		<li><a href="/linker/showmf/{{l.mf.id}}">{{l.mf.name}}</a>, {{l.mf.metabanalysis.name}}, {{l.p}}</li>
+		<li><a href="/linker/showmf/{{l.mf.id}}">{{l.mf.name}}</a>, {{l.mf.metabanalysis.name}}, {{l.p}}, Validated = <a href="/linker/validate_from_gcf/{{l.id}}">{{l.validated}}</a></li>
 	{% endfor %}
 </ul>
 </html>

@@ -13,6 +13,13 @@ urlpatterns = [
 	url(r'^showgcf/(?P<gcf_id>\w+)$',views.showgcf,name = 'showgcf'),
 	url(r'^showmf/(?P<mf_id>\w+)$',views.showmf,name = 'showmf'),
 	url(r'^analysis/(?P<analysis_id>\w+)$',views.show_analysis,name = 'show_analysis'),
+	url(r'^metabanalysis/(?P<metabanalysis_id>\w+)$',views.show_metabanalysis,name = 'show_metabanalysis'),
+	url(r'^spectra/(?P<metabanalysis_id>\w+)$',views.show_spectra,name = 'show_spectra'),
+	url(r'^mibig$',views.show_mibig,name = 'show_mibig'),
+	url(r'^validate_from_gcf/(?P<link_id>\w+)$',views.validate_from_gcf,name = 'validate_from_gcf'),
+	url(r'^validate_from_mf/(?P<link_id>\w+)$',views.validate_from_mf,name = 'validate_from_mf'),
+	url(r'^mibig/(?P<mibig_id>\w+)$',views.show_mibig_bgc,name = 'show_mibig_bgc'),
+	url(r'^vlinks$',views.show_validated,name = 'show_validated'),
 	url(r'^menu/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)$', views.menu,name='menu'),
 ]
 

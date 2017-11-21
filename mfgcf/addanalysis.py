@@ -13,6 +13,8 @@ from linker.models import *
 
 import glob
 
+from django.db import transaction
+
 strain_id_file = 'strain_ids.csv'
 
 def load_gcf_trio(analysis,file_trio,strain_dict):
@@ -137,86 +139,89 @@ def get_files(bigscape_outout_dir):
 def load_mf_file(mf_file,metabanalysis):
     mfdict = {}
     singleton_count = 0
-    with open(mf_file,'r') as f:
-        # reader = csv.reader(f,dialect='excel',delimiter = '\t')
-        reader = csv.reader(f,dialect='excel')
-        heads = reader.next()
-        
-        libpos = heads.index('LibraryID')
-
-        linkpos = heads.index('ProteoSAFeClusterLink')
-
-        # mfpos = heads.index('componentindex') # sometimes this is ComponentIndex?!
-        mfpos = heads.index('ComponentIndex')
-
-        ppos = heads.index('parent mass')
-
-
-        strain_index_dict = {}
-        strain_dict = {}
-
-        for strain_name in STRAIN_LIST:
-            try:
-                strain_pos = heads.index(strain_name)
-                strain_index_dict[strain_name] = heads.index(strain_name)
-                strain,_ = Strain.objects.get_or_create(name = strain_name)
-                strain_dict[strain_name] = strain
-
-            except:
-                pass
-
-        
-
-        media_index_dict = {}
-        media_dict = {}
-        for media_name in MEDIA_LIST:
-            try:
-                media_index_dict[media_name] = heads.index(media_name)
-                media,_ = Media.objects.get_or_create(name = media_name,metabanalysis = metabanalysis)
-                media_dict[media_name] = media
-            except:
-                pass
-
-        lines_read = 0      
-        for line in reader:
-            if len(line[1]) == 0: # overcome weird lines at bottom
-                continue
-            suid = line[0]
-            spectrum,created = Spectrum.objects.get_or_create(rowid = suid,metabanalysis = metabanalysis)
-            if created:
-                spectrum.libraryid = line[libpos]
-                spectrum.link = line[linkpos]
-                spectrum.parentmass = float(line[ppos])
-                spectrum.save()
+    with transaction.atomic():
+        with open(mf_file,'r') as f:
+            reader = csv.reader(f,dialect='excel',delimiter = '\t')
+            # reader = csv.reader(f,dialect='excel')
+            heads = reader.next()
             
-            mfnumber = line[mfpos]
-            if not len(mfnumber) == 0 and not mfnumber == '-1':
-                mfname = 'MF_{}'.format(mfnumber)
-                if not mfname in mfdict:
+            libpos = heads.index('LibraryID')
+
+            linkpos = heads.index('ProteoSAFeClusterLink')
+
+            mfpos = heads.index('componentindex') # sometimes this is ComponentIndex?!
+            # mfpos = heads.index('ComponentIndex')
+
+            ppos = heads.index('parent mass')
+            prpos = heads.index('precursor mass')
+
+
+            strain_index_dict = {}
+            strain_dict = {}
+
+            for strain_name in STRAIN_LIST:
+                try:
+                    strain_pos = heads.index(strain_name)
+                    strain_index_dict[strain_name] = heads.index(strain_name)
+                    strain,_ = Strain.objects.get_or_create(name = strain_name)
+                    strain_dict[strain_name] = strain
+
+                except:
+                    pass
+
+            
+
+            media_index_dict = {}
+            media_dict = {}
+            for media_name in MEDIA_LIST:
+                try:
+                    media_index_dict[media_name] = heads.index(media_name)
+                    media,_ = Media.objects.get_or_create(name = media_name,metabanalysis = metabanalysis)
+                    media_dict[media_name] = media
+                except:
+                    pass
+
+            lines_read = 0      
+            for line in reader:
+                if len(line[1]) == 0: # overcome weird lines at bottom
+                    continue
+                suid = line[0]
+                spectrum,created = Spectrum.objects.get_or_create(rowid = suid,metabanalysis = metabanalysis)
+                if created:
+                    spectrum.libraryid = line[libpos]
+                    spectrum.link = line[linkpos]
+                    spectrum.parentmass = float(line[ppos])
+                    spectrum.precursormass = float(line[prpos])
+                    spectrum.save()
+                
+                mfnumber = line[mfpos]
+                if not len(mfnumber) == 0 and not mfnumber == '-1':
+                    mfname = 'MF_{}'.format(mfnumber)
+                    if not mfname in mfdict:
+                        mf,created = MF.objects.get_or_create(name = mfname,metabanalysis = metabanalysis)
+                        mfdict[mfname] = mf
+                    else:
+                        mf = mfdict[mfname]
+                    SpectrumMF.objects.get_or_create(spectrum = spectrum,mf = mf)
+                else:
+                    # singleton - still save but have to make a special name
+                    mfname = 'MF_S_{}'.format(singleton_count)
+                    singleton_count += 1
                     mf,created = MF.objects.get_or_create(name = mfname,metabanalysis = metabanalysis)
                     mfdict[mfname] = mf
-                else:
-                    mf = mfdict[mfname]
-                SpectrumMF.objects.get_or_create(spectrum = spectrum,mf = mf)
-            else:
-                # singleton - still save but have to make a special name
-                mfname = 'MF_S_{}'.format(singleton_count)
-                singleton_count += 1
-                mf,created = MF.objects.get_or_create(name = mfname,metabanalysis = metabanalysis)
-                mfdict[mfname] = mf
-                SpectrumMF.objects.get_or_create(spectrum = spectrum,mf = mf)                
+                    SpectrumMF.objects.get_or_create(spectrum = spectrum,mf = mf)                
 
-            for strain_name in strain_index_dict:
-                count = int(line[strain_index_dict[strain_name]])
-                if count > 0:
-                    SpectrumStrain.objects.get_or_create(spectrum = spectrum,strain = strain_dict[strain_name],count = int(line[strain_index_dict[strain_name]]))
-            
-            for media_name in media_index_dict:
-                SpectrumMedia.objects.get_or_create(spectrum = spectrum,media = media_dict[media_name],count = int(line[media_index_dict[media_name]]))
-            
-            lines_read += 1
-            if lines_read % 100 == 0:
-                print "Read {}".format(lines_read)
+                for strain_name in strain_index_dict:
+                    count = int(line[strain_index_dict[strain_name]])
+                    if count > 0:
+                        SpectrumStrain.objects.get_or_create(spectrum = spectrum,strain = strain_dict[strain_name],count = int(line[strain_index_dict[strain_name]]))
+                
+                for media_name in media_index_dict:
+                    SpectrumMedia.objects.get_or_create(spectrum = spectrum,media = media_dict[media_name],count = int(line[media_index_dict[media_name]]))
+                
+                lines_read += 1
+                if lines_read % 100 == 0:
+                    print "Read {}".format(lines_read)
 
 def remove_things(analysis):
     pass
@@ -228,33 +233,33 @@ if __name__ == '__main__':
     mf_file = sys.argv[4]
     # strain_dir = sys.argv[4]
 
-    try:
-        analysis = Analysis.objects.create(name = analysis_name)
-    except:
-        print "Analysis already exists"
-        analysis = Analysis.objects.get(name = analysis_name)
-        remove_things(analysis)
-
     # try:
-    #     metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
+    #     analysis = Analysis.objects.create(name = analysis_name)
     # except:
     #     print "Analysis already exists"
-    #     metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
-    #     # remove_things(analysis)
+    #     analysis = Analysis.objects.get(name = analysis_name)
+    #     remove_things(analysis)
+
+    try:
+        metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
+    except:
+        print "Analysis already exists"
+        metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
+        # remove_things(analysis)
 
     
-    file_trios = get_files(bigscape_outout_dir)
-    strain_dict = {}
+    # file_trios = get_files(bigscape_outout_dir)
+    # strain_dict = {}
 
-    with open(strain_id_file,'r') as f:
-        reader = csv.reader(f)
-        for line in reader:
-            strain_dict[line[0]] = line[1]
-    for file_trio in file_trios:
-        print "Adding BGCs (and strains) from {}".format(file_trio[0])
-        strain_dict = load_gcf_trio(analysis,file_trio,strain_dict)
+    # with open(strain_id_file,'r') as f:
+    #     reader = csv.reader(f)
+    #     for line in reader:
+    #         strain_dict[line[0]] = line[1]
+    # for file_trio in file_trios:
+    #     print "Adding BGCs (and strains) from {}".format(file_trio[0])
+    #     strain_dict = load_gcf_trio(analysis,file_trio,strain_dict)
 
-    # load_mf_file(mf_file,metabanalysis)
+    load_mf_file(mf_file,metabanalysis)
 
     
 

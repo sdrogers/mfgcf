@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse,JsonResponse,HttpResponseRedirect
 from scipy.stats import hypergeom
 # Create your views here.
 import json
@@ -14,7 +14,15 @@ from linker.forms import *
 def index(request):
     analyses = Analysis.objects.all()
     context_dict = {'analyses': analyses}
+    metabanalyses = MetabAnalysis.objects.all()
+    context_dict['metabanalyses'] = metabanalyses
     return render(request,'linker/index.html',context_dict)
+
+def show_validated(request):
+    context_dict = {}
+    vlinks = MFGCFEdge.objects.filter(validated = True)
+    context_dict['vlinks'] = vlinks
+    return render(request,'linker/vlinks.html',context_dict)
 
 def show_analysis(request,analysis_id):
     analysis = Analysis.objects.get(id = analysis_id)
@@ -22,7 +30,30 @@ def show_analysis(request,analysis_id):
     context_dict['analysis'] = analysis
     metabanalyses = MetabAnalysis.objects.all()
     context_dict['metabanalyses'] = metabanalyses
+    gcfs = GCF.objects.filter(analysis = analysis)
+    context_dict['gcfs'] = gcfs
     return render(request,'linker/analysis.html',context_dict)
+
+def show_spectra(request,metabanalysis_id):
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    spectra = Spectrum.objects.filter(metabanalysis = metabanalysis)
+    mfs = []
+    for s in spectra:
+        mfs.append(s.spectrummf_set.all()[0].mf)
+    spectra = zip(spectra,mfs)
+    context_dict = {}
+    context_dict['metabanalysis'] = metabanalysis
+    context_dict['spectra'] = spectra
+    return render(request,'linker/spectra.html',context_dict)
+
+def show_metabanalysis(request,metabanalysis_id):
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    analyses = Analysis.objects.all()
+    context_dict = {}
+    context_dict['metabanalysis'] = metabanalysis
+    context_dict['analyses'] = analyses
+
+    return render(request,'linker/metabanalysis.html',context_dict)
 
 def menu(request,analysis_id,metabanalysis_id):
     analysis = Analysis.objects.get(id = analysis_id)
@@ -31,6 +62,26 @@ def menu(request,analysis_id,metabanalysis_id):
     context_dict['analysis'] = analysis
     context_dict['metabanalysis'] = metabanalysis
     return render(request,'linker/menu.html',context_dict)    
+
+def validate_from_mf(request,link_id):
+    link = MFGCFEdge.objects.get(id = link_id)
+    if link.validated:
+        link.validated = False
+    else:
+        link.validated = True
+    link.save()
+    return HttpResponseRedirect("/linker/showmf/{}".format(link.mf.id))
+
+def validate_from_gcf(request,link_id):
+    link = MFGCFEdge.objects.get(id = link_id)
+    if link.validated:
+        link.validated = False
+    else:
+        link.validated = True
+    link.save()
+    print request.path_info
+    print request.META.get('HTTP_')
+    return HttpResponseRedirect("/linker/showgcf/{}".format(link.gcf.id))
 
 def show_links(request,analysis_id,metabanalysis_id):
     context_dict = {}
@@ -67,16 +118,39 @@ def show_links(request,analysis_id,metabanalysis_id):
     context_dict['link_list'] = link_list
     return render(request,'linker/show_links.html',context_dict)
 
+def show_mibig(request):
+    context_dict = {}
+    mb = MiBIG.objects.all()
+    context_dict['mb'] = mb
+    return render(request,'linker/mibig.html',context_dict)
+
+def show_mibig_bgc(request,mibig_id):
+    mibig = MiBIG.objects.get(id = mibig_id)
+    context_dict = {}
+    context_dict['mibig_bgc'] = mibig
+    bgcs = mibig.bgc_set.all()
+    gcfs = []
+    for b in bgcs:
+        gcfs.append(b.bgcgcf_set.all()[0].gcf)
+    context_dict['bgcs'] = zip(bgcs,gcfs)
+    return render(request,'linker/mibig_bgc.html',context_dict)
+
 def showgcf(request,gcf_id):
     gcf = GCF.objects.get(id = gcf_id)
     context_dict = {}
     context_dict['gcf'] = gcf
     context_dict['strains'] = get_gcf_strain_set(gcf)
     bgc = [b.bgc for b in gcf.bgcgcf_set.all()]
-    strain = [b.bgcstrain_set.all()[0].strain for b in bgc]
+    strain = []
+    for b in bgc:
+        try:
+            strain.append(b.bgcstrain_set.all()[0].strain)
+        except:
+            # doesnt have a strain -- probably from mibig
+            strain.append(None)
     context_dict['bgc'] = zip(bgc,strain)
 
-    context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf)
+    context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf).order_by('p')
 
     return render(request,'linker/showgcf.html',context_dict)
 
@@ -90,8 +164,14 @@ def showmf(request,mf_id):
     for s in spectra:
         spec_strains.append([st.strain for st in s.spectrumstrain_set.all()])
     context_dict['spectra'] = zip(spectra,spec_strains)
+    
+    links = MFGCFEdge.objects.filter(mf = mf).order_by('p')
+    mibig = []
+    for l in links:
+        mibig.append(l.gcf.mibig)
 
-    context_dict['links'] = MFGCFEdge.objects.filter(mf = mf)
+    
+    context_dict['links'] = zip(links,mibig)
 
     return render(request,'linker/showmf.html',context_dict)
 
@@ -200,6 +280,10 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     nodes = {}
     p_thresh = 0.01
     links = MFGCFEdge.objects.filter(p__lte = p_thresh,mf__in = mfs,gcf__in = gcfs)
+    links2 = MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
+    links = list(set(list(links)+list(links2)))
+    print "{},{},found {} links".format(analysis,metabanalysis,len(links))
+    # links = list(set(links))
     for link in links:
         if not link.mf.name in nodes:
             n = len(get_mf_strain_set(link.mf))
@@ -211,7 +295,7 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
             # n = 10
             G.add_node(link.gcf.name,nstrains = n,gcftype = link.gcf.gcftype,nodetype='gcf',dbid = link.gcf.id)
             nodes[link.gcf.name] = True
-        G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p))
+        G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p),validated = link.validated)
     
 
     

@@ -7,10 +7,10 @@ import django
 django.setup()
 
 from linker.models import *
-
+from django.db import transaction
 
 def compute_h_scores(analysis,metabanalysis):
-    p_thresh = 0.01
+    p_thresh = 0.05
 
     # find all the strains in this analysis
     bgcs = BGC.objects.filter(analysis = analysis)
@@ -24,14 +24,16 @@ def compute_h_scores(analysis,metabanalysis):
     # make a mf dictionary of strain sets
     print "Extracting strain sets for MFs"
     mf_dict = {}
-    mfs = MF.objects.filter(metabanalysis = metabanalysis,name__startswith='MF_S')
+    mfs = MF.objects.filter(metabanalysis = metabanalysis)
+    # mfs = filter(lambda x: not x.name.startswith('MF_S'),mfs)
+
     for mf in mfs:
         mf_spectra = [a.spectrum for a in mf.spectrummf_set.all()]
         mf_strains = [item.strain for s in mf_spectra for item in s.spectrumstrain_set.all()]
         mf_dict[mf] = set(mf_strains) 
 
     # make a gcf dictionary of strain sets
-    print "Extractig strain sets for GCFs"
+    print "Extracting strain sets for GCFs"
     gcf_dict = {}
     gcfs = GCF.objects.filter(analysis = analysis)
     for gcf in gcfs:
@@ -43,30 +45,31 @@ def compute_h_scores(analysis,metabanalysis):
     print "Computing hg stats"
     n_strains = len(strains)
     n_mf_done = 0
-    for mf in mf_dict:
-        for gcf in gcf_dict:
-            # Compute the overlap
-            mf_strains = mf_dict[mf]
-            n_mf_strains = len(mf_strains)
-            gcf_strains = gcf_dict[gcf]
-            n_gcf_strains = len(gcf_strains)
-            just_in_mf = mf_strains - gcf_strains
-            just_in_gcf = gcf_strains - mf_strains
-            union = gcf_strains.union(mf_strains)
-            overlap = gcf_strains.intersection(mf_strains)
-            if len(overlap)> 0:
-                # compute the probability of getting overlap or more if the mf define the urn
-                a = 0
-                for x in range(len(overlap),n_gcf_strains+1):
-                    a += hypergeom.pmf(x,n_strains,n_mf_strains,n_gcf_strains)
-                if a<= p_thresh:
-                    e,b = MFGCFEdge.objects.get_or_create(mf = mf,gcf = gcf)
-                    e.p = a
-                    e.save()
-                    # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
-        n_mf_done += 1
-        if n_mf_done % 1 == 0:
-            print "Done {} of {}".format(n_mf_done,len(mf_dict))
+    with transaction.atomic():
+        for mf in mf_dict:
+            for gcf in gcf_dict:
+                # Compute the overlap
+                mf_strains = mf_dict[mf]
+                n_mf_strains = len(mf_strains)
+                gcf_strains = gcf_dict[gcf]
+                n_gcf_strains = len(gcf_strains)
+                just_in_mf = mf_strains - gcf_strains
+                just_in_gcf = gcf_strains - mf_strains
+                union = gcf_strains.union(mf_strains)
+                overlap = gcf_strains.intersection(mf_strains)
+                if len(overlap)> 0:
+                    # compute the probability of getting overlap or more if the mf define the urn
+                    a = 0
+                    for x in range(len(overlap),n_gcf_strains+1):
+                        a += hypergeom.pmf(x,n_strains,n_mf_strains,n_gcf_strains)
+                    if a<= p_thresh:
+                        e,b = MFGCFEdge.objects.get_or_create(mf = mf,gcf = gcf)
+                        e.p = a
+                        e.save()
+                        # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
+            n_mf_done += 1
+            if n_mf_done % 1 == 0:
+                print "Done {} of {}".format(n_mf_done,len(mf_dict))
 
 if __name__ == '__main__':
     analysis_name = sys.argv[1]

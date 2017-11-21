@@ -1,0 +1,20 @@
+<html>
+
+<h3>MetabAnalysis: {{metabanalysis.name}}</h3>
+
+<table border=1>
+	<thead>
+		<tr><th>ID</th><th>MF</th><th>Library ID</th></tr>
+	</thead>
+	<tbody>
+		{% for s in spectra %}
+			<tr>
+				<td>{{s.0.rowid}}</td>
+				<td><a href="/linker/showmf/{{s.1.id}}" target="_blank">{{s.1.name}}</a></td>
+				<td>{{s.0.libraryid}}</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+</html>
