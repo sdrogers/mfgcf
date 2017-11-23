@@ -11,6 +11,28 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import distutils.util as du
+
+def getNeededString(name):
+    if not os.environ.has_key(name):
+        raise Exception('Environment variable ' + name + ' is needed but is not defined')
+    return os.environ[name]
+
+def getString(name, default):
+    if not os.environ.has_key(name):
+        return default
+    return os.environ[name]
+
+def getBool(name, default):
+    if not os.environ.has_key(name):
+        return default
+    return bool(du.strtobool(os.environ[name]))
+
+def getList(name, default):
+    if not os.environ.has_key(name):
+        return default
+    return os.environ[name].split(',')
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,9 +45,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'z$0kae=$hkdy9=n@(nb9umafzg0q5q#y(6r6981-y&$0-+7u^s'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = getBool('DEBUG', True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 
 # Application definition
@@ -74,13 +96,27 @@ WSGI_APPLICATION = 'mfgcf.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
+DATABASE_ENGINE = getString('DATABASE_ENGINE', 'django.db.backends.sqlite3')
+if DATABASE_ENGINE == 'django.db.backends.mysql':
+    DATABASE_NAME = getNeededString('MYSQL_DATABASE')
+    DATABASE_USER = getNeededString('MYSQL_USER')
+    DATABASE_PASSWORD = getNeededString('MYSQL_PASSWORD')
+elif DATABASE_ENGINE == 'django.db.backends.sqlite3':
+    SQLITE_DATABASE_FILENAME = getString('SQLITE_DATABASE_FILENAME', 'db.sqlite3')
+    DATABASE_NAME = os.path.join(BASE_DIR, SQLITE_DATABASE_FILENAME)
+    DATABASE_USER = ''
+    DATABASE_PASSWORD = ''
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': DATABASE_ENGINE,
+        'NAME': DATABASE_NAME,
+        'USER': DATABASE_USER,                      # Not used with sqlite3.
+        'PASSWORD': DATABASE_PASSWORD,                  # Not used with sqlite3.
+        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -119,7 +155,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_PATH = os.path.join(BASE_DIR,'static')
-STATIC_ROOT = os.path.join(BASE_DIR,'assets')
+STATIC_ROOT = getString('STATIC_ROOT', os.path.join(BASE_DIR,'assets'))
 
 STATIC_URL = '/static/'
 
