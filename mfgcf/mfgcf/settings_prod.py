@@ -118,17 +118,6 @@ DATABASES = {
     }
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mfgcf',
-        'USER': 'mfgcf',
-        'PASSWORD': 'WdEZ4muJmX',
-        'HOST': '',
-        'PORT': '',
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
