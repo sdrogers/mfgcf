@@ -96,7 +96,7 @@ WSGI_APPLICATION = 'mfgcf.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
-DATABASE_ENGINE = getString('DATABASE_ENGINE', 'django.db.backends.sqlite3'
+DATABASE_ENGINE = getString('DATABASE_ENGINE', 'django.db.backends.sqlite3')
 if DATABASE_ENGINE == 'django.db.backends.mysql':
     DATABASE_NAME = getNeededString('MYSQL_DATABASE')
     DATABASE_USER = getNeededString('MYSQL_USER')
