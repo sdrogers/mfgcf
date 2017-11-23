@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-export DJANGO_SETTINGS_MODULE=mfgcf.settings_prod
-
 . ../../venv/mfgcf/bin/activate
 set -a
 . .env
