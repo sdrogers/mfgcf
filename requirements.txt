@@ -4,3 +4,4 @@ networkx==2.0
 numpy==1.13.3
 scipy==1.0.0
 gunicorn==19.7.1
+MySQL-python==1.2.5
