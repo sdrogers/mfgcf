@@ -227,10 +227,10 @@ def remove_things(analysis):
     pass
 
 if __name__ == '__main__':
-    analysis_name = sys.argv[1]
-    metabanalysis_name = sys.argv[2]
-    bigscape_outout_dir = sys.argv[3]
-    mf_file = sys.argv[4]
+    # analysis_name = sys.argv[1]
+    metabanalysis_name = sys.argv[1]
+    # bigscape_outout_dir = sys.argv[3]
+    mf_file = sys.argv[2]
     # strain_dir = sys.argv[4]
 
     # try:
