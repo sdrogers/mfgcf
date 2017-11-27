@@ -87,7 +87,7 @@ def hg_test(mf_strains, gcf_strains, n_strains, p_thresh):
     return False
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser("Rank analysis links")
     parser.add_argument(dest='analysis_name', help='Analysis name')
     parser.add_argument(dest='metabanalysis_name', help='Metabolic analysis name')
@@ -109,3 +109,7 @@ if __name__ == '__main__':
     }
 
     compute_scores(analysis, metabanalysis, method, parameters)
+
+
+if __name__ == '__main__':
+    main()
