@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% load staticfiles %}
+
+{% block body_block %}
+
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <h1>Metabanalysis: {{metabanalysis.name}}</h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content container-fluid">
+        <ul>
+            {% for mf in mfs %}
+                <li><A href="/linker/showmf/{{mf.id}}" target="_blank">{{mf.name}}</A> {% if mf.libid %} ({% for l in mf.libid %} {{l}},&nbsp; {% endfor %}){% endif %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+        
+
+{% endblock %}

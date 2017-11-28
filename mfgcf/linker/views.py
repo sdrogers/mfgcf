@@ -58,6 +58,14 @@ def show_metabanalysis(request,metabanalysis_id):
 
     return render(request,'linker/metabanalysis.html',context_dict)
 
+def show_allmf(request,metabanalysis_id):
+    context_dict = {}
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    context_dict['metabanalysis'] = metabanalysis
+    context_dict['mfs'] = MF.objects.filter(metabanalysis = metabanalysis).order_by('name')
+    return render(request,'linker/allmf.html',context_dict)
+
+
 def menu(request,analysis_id,metabanalysis_id):
     analysis = Analysis.objects.get(id = analysis_id)
     metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
