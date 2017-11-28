@@ -17,43 +17,57 @@ from django.db import transaction
 
 strain_id_file = 'strain_ids.csv'
 
-def load_gcf_trio(analysis,file_trio,strain_dict):
+def load_gcf_trio(analysis,file_trio,strain_dict,gcf_duplicate_dict):
     network_file,tsv_file,annotations_file = file_trio
     # This file includes the BGC info
     bgc_dict = {}
     with open(annotations_file,'r') as f:
-        reader = csv.reader(f,delimiter='\t')
-        heads = reader.next()
-        for line in reader:
-            name = line[0]  
-            bgc,_ = BGC.objects.get_or_create(name = name,analysis=analysis)
-            bgc.accession = line[1]
-            bgc.description = line[2]
-            bgc.product = line[3]
-            bgc.bgsclass = line[4]
-            bgc.save()
-            bgc_dict[bgc.name] = bgc
-            genbank_name = bgc.name.split('_')[0]
-            if '.' in genbank_name:
-                genbank_name = genbank_name.split('.')[0]
-            if genbank_name == 'GCA':
-                # hack!
-                genbank_name = '_'.join(bgc.name.split('_')[:2])
-                genbank_name = genbank_name.split('.')[0]
-            strain_name = None
-            if not genbank_name in strain_dict:
-                print "{} STRAIN NOT FOUND!".format(genbank_name)
-                # strain_name = get_strain(genbank_name,strain_dir)
-                # strain_dict[genbank_name] = strain_name
-            else:
-                strain_name = strain_dict[genbank_name]
-            if not strain_name == None:
-                strain,created = Strain.objects.get_or_create(name = strain_name)
-                if created:
-                    strain.organism = line[5]
-                    strain.taxonomy = line[6]
-                    strain.save()
-                BGCStrain.objects.get_or_create(bgc = bgc,strain = strain)
+        with transaction.atomic():
+            reader = csv.reader(f,delimiter='\t')
+            heads = reader.next()
+            for line in reader:
+                name = line[0]  
+                bgc,_ = BGC.objects.get_or_create(name = name,analysis=analysis)
+                bgc.accession = line[1]
+                bgc.description = line[2]
+                bgc.product = line[3]
+                bgc.bgsclass = line[4]
+
+                if name.startswith('BGC'):
+                    # this is an mibig one
+                    try:
+                        mibig = MiBIG.objects.get(name = name.split('.')[0])
+                    except:
+                        print name
+                        sys.exit(0)
+                    bgc.mibig = mibig
+
+
+                bgc.save()
+                bgc_dict[bgc.name] = bgc
+
+
+                genbank_name = bgc.name.split('_')[0]
+                if '.' in genbank_name:
+                    genbank_name = genbank_name.split('.')[0]
+                if genbank_name == 'GCA':
+                    # hack!
+                    genbank_name = '_'.join(bgc.name.split('_')[:2])
+                    genbank_name = genbank_name.split('.')[0]
+                strain_name = None
+                if not genbank_name in strain_dict:
+                    print "{} STRAIN NOT FOUND!".format(genbank_name)
+                    # strain_name = get_strain(genbank_name,strain_dir)
+                    # strain_dict[genbank_name] = strain_name
+                else:
+                    strain_name = strain_dict[genbank_name]
+                if not strain_name == None:
+                    strain,created = Strain.objects.get_or_create(name = strain_name)
+                    if created:
+                        strain.organism = line[5]
+                        strain.taxonomy = line[6]
+                        strain.save()
+                    BGCStrain.objects.get_or_create(bgc = bgc,strain = strain)
 
             
     
@@ -61,6 +75,7 @@ def load_gcf_trio(analysis,file_trio,strain_dict):
     #   for line in f:
     #       print line
     #       break
+
     with open(tsv_file,'r') as f:
         reader = csv.reader(f,delimiter = '\t')
         heads = reader.next()
@@ -70,18 +85,61 @@ def load_gcf_trio(analysis,file_trio,strain_dict):
             bgcname = line[0]
             bgc = BGC.objects.get(name = bgcname,analysis = analysis)
             family_number = line[1]
-            family_name = 'GCF_{}_{}'.format(gcf_type,family_number)
-            if not family_name in gcf_dict:
-                gcf,created = GCF.objects.get_or_create(name = family_name,analysis = analysis)
-                if created:
-                    gcf.gcftype = gcf_type
-                    gcf.save()
-                gcf_dict[family_name] = gcf
+            old_name = 'GCF_{}_{}'.format(gcf_type,family_number)
+            if not old_name in gcf_dict:
+                gcf_dict[old_name] = [bgc]
             else:
-                gcf = gcf_dict[family_name]
+                gcf_dict[old_name].append(bgc)
 
-            BGCGCF.objects.get_or_create(bgc = bgc,gcf = gcf)
-    return strain_dict
+    gcf_no = len(gcf_duplicate_dict)
+    with transaction.atomic():
+        for old_name,bgcs in gcf_dict.items():
+            bids = sorted([b.id for b in bgcs])
+            sbids = [str(b) for b in bids]
+            gcf_string = ":".join(sbids)
+            if gcf_string in gcf_duplicate_dict:
+                # we've made this one before, just create a new class object
+                gcf = gcf_duplicate_dict[gcf_string]
+                gcfclassname = old_name.split('_')[1]
+                gcfclass = GCFClass.objects.get(name = gcfclassname)
+                GCFtoClass.objects.get_or_create(gcf = gcf,gcfclass = gcfclass,original_name = old_name)
+            else:
+                # make a new GCF
+                newname = "GCF_{}_{}".format(analysis.name,gcf_no)
+                gcf_no += 1
+                gcf,_ = GCF.objects.get_or_create(analysis = analysis,name = newname)
+                gcf_duplicate_dict[gcf_string] = gcf
+                gcfclassname = old_name.split('_')[1]
+                gcfclass = GCFClass.objects.get(name = gcfclassname)
+                GCFtoClass.objects.get_or_create(gcf = gcf,gcfclass = gcfclass,original_name = old_name)
+                for bgc in bgcs:
+                    try:
+                        BGCGCF.objects.get_or_create(bgc = bgc,gcf = gcf)
+                    except:
+                        print bgc,gcf
+                        sys.exit(0)
+
+    # with open(tsv_file,'r') as f:
+    #     reader = csv.reader(f,delimiter = '\t')
+    #     heads = reader.next()
+    #     gcf_type = tsv_file.split(os.sep)[-1].split('_')[0]
+    #     gcf_dict = {}
+    #     for line in reader:
+    #         bgcname = line[0]
+    #         bgc = BGC.objects.get(name = bgcname,analysis = analysis)
+    #         family_number = line[1]
+    #         family_name = 'GCF_{}_{}'.format(gcf_type,family_number)
+    #         if not family_name in gcf_dict:
+    #             gcf,created = GCF.objects.get_or_create(name = family_name,analysis = analysis)
+    #             if created:
+    #                 gcf.gcftype = gcf_type
+    #                 gcf.save()
+    #             gcf_dict[family_name] = gcf
+    #         else:
+    #             gcf = gcf_dict[family_name]
+
+    #         BGCGCF.objects.get_or_create(bgc = bgc,gcf = gcf)
+    return gcf_duplicate_dict
     
 
 def get_strain(accession,strain_dir):
@@ -227,39 +285,40 @@ def remove_things(analysis):
     pass
 
 if __name__ == '__main__':
-    # analysis_name = sys.argv[1]
-    metabanalysis_name = sys.argv[1]
-    # bigscape_outout_dir = sys.argv[3]
-    mf_file = sys.argv[2]
+    analysis_name = sys.argv[1]
+    # metabanalysis_name = sys.argv[1]
+    bigscape_outout_dir = sys.argv[2]
+    # mf_file = sys.argv[2]
     # strain_dir = sys.argv[4]
 
-    # try:
-    #     analysis = Analysis.objects.create(name = analysis_name)
-    # except:
-    #     print "Analysis already exists"
-    #     analysis = Analysis.objects.get(name = analysis_name)
-    #     remove_things(analysis)
-
     try:
-        metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
+        analysis = Analysis.objects.create(name = analysis_name)
     except:
         print "Analysis already exists"
-        metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
-        # remove_things(analysis)
+        analysis = Analysis.objects.get(name = analysis_name)
+    #     remove_things(analysis)
+
+    # try:
+    #     metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
+    # except:
+    #     print "Analysis already exists"
+    #     metabanalysis = MetabAnalysis.objects.get(name = metabanalysis_name)
+    #     # remove_things(analysis)
 
     
-    # file_trios = get_files(bigscape_outout_dir)
-    # strain_dict = {}
+    file_trios = get_files(bigscape_outout_dir)
+    strain_dict = {}
 
-    # with open(strain_id_file,'r') as f:
-    #     reader = csv.reader(f)
-    #     for line in reader:
-    #         strain_dict[line[0]] = line[1]
-    # for file_trio in file_trios:
-    #     print "Adding BGCs (and strains) from {}".format(file_trio[0])
-    #     strain_dict = load_gcf_trio(analysis,file_trio,strain_dict)
+    with open(strain_id_file,'r') as f:
+        reader = csv.reader(f)
+        for line in reader:
+            strain_dict[line[0]] = line[1]
+    gcf_duplicate_dict = {}
+    for file_trio in file_trios:
+        print "Adding BGCs (and strains) from {}".format(file_trio[0])
+        gcf_dict = load_gcf_trio(analysis,file_trio,strain_dict,gcf_duplicate_dict)
 
-    load_mf_file(mf_file,metabanalysis)
+    # load_mf_file(mf_file,metabanalysis)
 
     
 

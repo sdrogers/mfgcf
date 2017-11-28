@@ -1,5 +1,14 @@
 <html>
 <h3>GCF: {{gcf.name}} from {{gcf.analysis.name}}</h3>
+
+<h4>Original GCFs</h4>
+<p>GCFs are duplicated -- these are the refs to the original so they can be found in the bigscape output. The number at the end refers to the number in the Bigscape output file.</p>
+<ul>
+	{% for cl in class_links %}
+		<li>{{cl.gcfclass.name}}, {{cl.original_name}}</li>
+	{% endfor %}
+</ul>
+
 <h4>Strains</h4>
 <ul>
 	{% for s in strains %}

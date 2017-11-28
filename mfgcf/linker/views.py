@@ -140,6 +140,7 @@ def showgcf(request,gcf_id):
     context_dict = {}
     context_dict['gcf'] = gcf
     context_dict['strains'] = get_gcf_strain_set(gcf)
+    context_dict['class_links'] = GCFtoClass.objects.filter(gcf = gcf)
     bgc = [b.bgc for b in gcf.bgcgcf_set.all()]
     strain = []
     for b in bgc:
@@ -290,12 +291,14 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     # links = list(set(links))
     for link in links:
         if not link.mf.name in nodes:
-            n = len(get_mf_strain_set(link.mf))
+            # n = len(get_mf_strain_set(link.mf))
+            n = link.mf.n_strains
             # n = 10
             G.add_node(link.mf.name,nstrains = n,nodetype='mf',dbid = link.mf.id)
             nodes[link.mf.name] = True
         if not link.gcf.name in nodes:
-            n = len(get_gcf_strain_set(link.gcf))
+            # n = len(get_gcf_strain_set(link.gcf))
+            n = link.gcf.n_strains
             # n = 10
             gcftypes = link.gcf.gcftypeset
             overlap = list(set(gcfclasses).intersection(gcftypes))
