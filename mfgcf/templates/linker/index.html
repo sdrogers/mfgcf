@@ -1,20 +1,43 @@
-<html>
+{% extends 'base.html' %}
 
-<h3>Choose a Bigscape analysis</h3>
-<ul>
-	{% for analysis in analyses %}
-		<li><a href="/linker/analysis/{{analysis.id}}">{{analysis.name}}</a>
-	{% endfor %}
-</ul>
+{% load staticfiles %}
 
+{% block body_block %}
 
-<h3>Choose a Molecular Networking analysis</h3>
-<ul>
-	{% for m in metabanalyses %}
-		<li><a href="/linker/metabanalysis/{{m.id}}">{{m.name}}</a>
-	{% endfor %}
-</ul>
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
 
-<h3>Or <a href="/linker/mibig">search from MiBIG BGCs</a></h3>
-<h3>Or <a href="/linker/vlinks">Start from list of validated links</a></h3>
-</html>
+      <h1>
+        Linker
+        <small>Links Molecular Families and Gene Cluster Families</small>
+      </h1>
+
+      <ol class="breadcrumb">
+        <li><a href="/"><i class="fa fa-dashboard"></i> MFGCF</a></li>
+        <li class="active">Linker</li>
+      </ol>
+
+    </section>
+
+    <!-- Main content -->
+    <section class="content container-fluid">
+
+        <h3>Start by choosing any of the following</h3>
+
+        <h4>Molecular Family (MF) Analysis</h4>
+        <ul>
+            {% for m in metabanalyses %}
+                <li><a href="/linker/metabanalysis/{{m.id}}">{{m.name}}</a>
+            {% endfor %}
+        </ul>
+
+        <h4>Gene Cluster Family (GCF) Analysis</h4>
+        <ul>
+            {% for analysis in analyses %}
+                <li><a href="/linker/analysis/{{analysis.id}}">{{analysis.name}}</a>
+            {% endfor %}
+        </ul>
+
+    </section>
+
+{% endblock %}

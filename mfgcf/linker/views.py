@@ -197,6 +197,11 @@ def show_graph(request,analysis_id,metabanalysis_id):
         form = GraphForm()
         context_dict['graph_form'] = form
 
+    analysis = Analysis.objects.get(id = analysis_id)
+    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
+    context_dict['analysis'] = analysis
+    context_dict['metabanalysis'] = metabanalysis
+
     return render(request,'linker/graph_form.html',context_dict)
 
 def get_overlap_strain_set(gcf,mf):

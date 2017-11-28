@@ -1,11 +1,35 @@
-<html>
+{% extends 'base.html' %}
 
-<h3>MetabAnalysis: {{metabanalysis.name}}</h3>
-	<div><a href="/linker/spectra/{{metabanalysis.id}}">show spectra</a></div>
-	<h4>Choose a GCF analysis</h4>
-	<ul>
-		{% for a in analyses %}
-			<li><a href="/linker/menu/{{a.id}}/{{metabanalysis.id}}">{{a.name}}</a></li>
-		{% endfor %}
-	</ul>
-</html>
+{% load staticfiles %}
+
+{% block body_block %}
+
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+
+      <h1>
+        MF Analysis: {{metabanalysis.name}}
+        <small><a href="/linker/spectra/{{metabanalysis.id}}">Show Spectra</a></small>
+      </h1>
+
+      <ol class="breadcrumb">
+        <li><a href="/"><i class="fa fa-dashboard"></i> MFGCF</a></li>
+        <li><a href="/linker">Linker</a></li>
+        <li class="active">MF Analysis</li>
+      </ol>
+
+    </section>
+
+    <!-- Main content -->
+    <section class="content container-fluid">
+
+        <h4>Choose a GCF Analysis to link</h4>
+        <ul>
+            {% for a in analyses %}
+                <li><a href="/linker/menu/{{a.id}}/{{metabanalysis.id}}">{{a.name}}</a></li>
+            {% endfor %}
+        </ul>
+
+    </section>
+
+{% endblock %}

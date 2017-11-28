@@ -1,23 +1,37 @@
-<html>
-<h3>MF: {{mf.name}} from {{mf.metabanalysis.name}}</h3>
-<h4>Strains</h4>
-<ul>
-	{% for s in strains %}
-		<li>{{s.name}}, {{s.taxonomy}}, {{s.organism}}</li>
-	{% endfor %}
-</ul>
-<h4>Spectra:</h4>
-<ul>
-	{% for s in spectra %}
-		<li>{{s.0.rowid}}, {{s.0.libraryid}}, {% if s.0.link %}<a href="{{s.0.link}}">link</a>{% endif %}, {% for st in s.1 %} {{st.name}}&nbsp; {% endfor %}</li>
-	{% endfor %}
-</ul>
+{% extends 'base.html' %}
 
-<h4>Significant links</h4>
-<ul>
-	{% for l in links %}
-		<li><a href="/linker/showgcf/{{l.0.gcf.id}}">{{l.0.gcf.name}}</a>, {{l.0.gcf.analysis.name}}, {{l.0.p}} {% if l.1 %} ({% for m in l.1 %}<a href="{{m.url}}" target="_blank">{{m}}</a>&nbsp;&nbsp;{% endfor %}) {% endif %} Validated = <a href="/linker/validate_from_mf/{{l.0.id}}">{{l.0.validated}}</a></li>
-	{% endfor %}
-</ul>
+{% load staticfiles %}
 
-</html>
+{% block body_block %}
+
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <h1>MF: {{mf.name}} from {{mf.metabanalysis.name}}</h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content container-fluid">
+
+        <h4>Strains</h4>
+        <ul>
+            {% for s in strains %}
+                <li>{{s.name}}, {{s.taxonomy}}, {{s.organism}}</li>
+            {% endfor %}
+        </ul>
+        <h4>Spectra:</h4>
+        <ul>
+            {% for s in spectra %}
+                <li>{{s.0.rowid}}, {{s.0.libraryid}}, {% if s.0.link %}<a href="{{s.0.link}}">link</a>{% endif %}, {% for st in s.1 %} {{st.name}}&nbsp; {% endfor %}</li>
+            {% endfor %}
+        </ul>
+
+        <h4>Significant links</h4>
+        <ul>
+            {% for l in links %}
+                <li><a href="/linker/showgcf/{{l.0.gcf.id}}">{{l.0.gcf.name}}</a>, {{l.0.gcf.analysis.name}}, {{l.0.p}} {% if l.1 %} ({% for m in l.1 %}<a href="{{m.url}}" target="_blank">{{m}}</a>&nbsp;&nbsp;{% endfor %}) {% endif %} Validated = <a href="/linker/validate_from_mf/{{l.0.id}}">{{l.0.validated}}</a></li>
+            {% endfor %}
+        </ul>
+
+    </section>
+
+{% endblock %}
