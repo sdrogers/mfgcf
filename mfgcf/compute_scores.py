@@ -62,7 +62,7 @@ def compute_scores(analysis, metabanalysis, method, parameters):
                 if result:
                     e, b = MFGCFEdge.objects.get_or_create(mf=mf, gcf=gcf)
                     e.p = a
-                    # e.save()
+                    e.save()
                     # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
             n_mf_done += 1
             if n_mf_done % 1 == 0:
