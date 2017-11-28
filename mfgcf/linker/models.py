@@ -23,6 +23,11 @@ class Strain(models.Model):
     def __str__(self):
         return self.name
 
+class GCFClass(models.Model):
+    name = models.CharField(max_length = 100,null = False)
+    source = models.CharField(max_length = 100,null = False)
+    def __str__(self):
+        return "{} ({})".format(self.name,self.source)
 
 class MiBIG(models.Model):
     name = models.CharField(max_length = 100,unique = True)
@@ -46,8 +51,18 @@ class BGC(models.Model):
 
 class GCF(models.Model):
     name = models.CharField(max_length=200)
-    gcftype = models.CharField(max_length=200,null=True)
     analysis = models.ForeignKey(Analysis)
+    @property
+    def gcftype(self):
+        classlinks = self.gcftoclass_set.all()
+        classnames = [c.gcfclass.name for c in classlinks]
+        return ",".join(classnames)
+
+    @property
+    def gcftypeset(self):
+        classlinks = self.gcftoclass_set.all()
+        return set([c.gcfclass for c in classlinks])
+
 
     @property
     def mibig(self):
@@ -65,7 +80,10 @@ class GCF(models.Model):
         return len(self.bgcgcf_set.all())
 
 
-
+class GCFtoClass(models.Model):
+    gcf = models.ForeignKey(GCF)
+    gcfclass = models.ForeignKey(GCFClass)
+    original_name = models.CharField(max_length = 100,null = True)
 
 class BGCGCF(models.Model):
     bgc = models.ForeignKey(BGC)
@@ -128,3 +146,5 @@ class MFGCFEdge(models.Model):
     gcf = models.ForeignKey(GCF)
     p = models.FloatField(null = True)
     validated = models.BooleanField(default = False)
+    def __str__(self):
+        return "{}->{}".format(self.mf.name,self.gcf.name)

@@ -257,9 +257,13 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     families = int(families)
     gcftypes = get_families(families)
     
+    gcfclasses = []
+    for g in gcftypes:
+        gcfclasses.append(GCFClass.objects.get(name = g,source = 'BIGSCAPE'))
 
     mfs = MF.objects.filter(metabanalysis = metabanalysis)
-    gcfs = GCF.objects.filter(analysis = analysis,gcftype__in = gcftypes)
+    gcfs = GCF.objects.filter(analysis = analysis,gcftoclass__gcfclass__in = gcfclasses)
+    # gcfs = GCF.objects.filter(analysis = analysis,gcftype__in = gcftypes)
 
     # strains = Strain.objects.all()
     # mfs_list = []
@@ -293,7 +297,11 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
         if not link.gcf.name in nodes:
             n = len(get_gcf_strain_set(link.gcf))
             # n = 10
-            G.add_node(link.gcf.name,nstrains = n,gcftype = link.gcf.gcftype,nodetype='gcf',dbid = link.gcf.id)
+            gcftypes = link.gcf.gcftypeset
+            overlap = list(set(gcfclasses).intersection(gcftypes))
+
+
+            G.add_node(link.gcf.name,nstrains = n,gcftype = overlap[0].name,nodetype='gcf',dbid = link.gcf.id)
             nodes[link.gcf.name] = True
         G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p),validated = link.validated)
     
