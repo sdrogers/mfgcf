@@ -1,9 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse,HttpResponseRedirect
+from django.db import transaction
 from scipy.stats import hypergeom
 # Create your views here.
 import json
 import numpy as np
+
+
 
 GCF_TYPES = ['allRiPPs','allPKSother','allOthers','allNRPS','allPKSI','allPKS-NRP','allSaccharides','allTerpene']
 
@@ -176,6 +179,7 @@ def showmf(request,mf_id):
 
     return render(request,'linker/showmf.html',context_dict)
 
+
 def show_graph(request,analysis_id,metabanalysis_id):
     context_dict = {'analysis_id':analysis_id,'metabanalysis_id':metabanalysis_id}    
 
@@ -193,6 +197,7 @@ def show_graph(request,analysis_id,metabanalysis_id):
                     families += 2**po
             print gcftypes,families
             context_dict['families'] = families
+            context_dict['link_threshold'] = form.cleaned_data['link_threshold']
         return render(request,'linker/show_graph.html',context_dict)
     else:
         form = GraphForm()
@@ -247,7 +252,7 @@ def get_families(families):
             families -= 2**po
     return gcftypes
 
-def get_graph(request,analysis_id,metabanalysis_id,families):
+def get_graph(request,analysis_id,metabanalysis_id,families,link_threshold):
     import networkx as nx
     from networkx.readwrite import json_graph
 
@@ -283,30 +288,40 @@ def get_graph(request,analysis_id,metabanalysis_id,families):
     #     G.add_node(g.name,nstrains = n,gcftype = g.gcftype,nodetype='gcf',dbid = g.id)
 
     nodes = {}
-    p_thresh = 0.01
+    p_thresh = link_threshold
     links = MFGCFEdge.objects.filter(p__lte = p_thresh,mf__in = mfs,gcf__in = gcfs)
     links2 = MFGCFEdge.objects.filter(validated = True,mf__in = mfs,gcf__in = gcfs)
     links = list(set(list(links)+list(links2)))
     print "{},{},found {} links".format(analysis,metabanalysis,len(links))
     # links = list(set(links))
-    for link in links:
-        if not link.mf.name in nodes:
-            # n = len(get_mf_strain_set(link.mf))
-            n = link.mf.n_strains
-            # n = 10
-            G.add_node(link.mf.name,nstrains = n,nodetype='mf',dbid = link.mf.id)
-            nodes[link.mf.name] = True
-        if not link.gcf.name in nodes:
-            # n = len(get_gcf_strain_set(link.gcf))
-            n = link.gcf.n_strains
-            # n = 10
-            gcftypes = link.gcf.gcftypeset
-            overlap = list(set(gcfclasses).intersection(gcftypes))
+    with transaction.atomic():
+        for link in links:
+            if not link.mf.name in nodes:
+                # n = len(get_mf_strain_set(link.mf))
+                n = link.mf.n_strains
+                if not n:
+                    n = len(get_mf_strain_set(link.mf))
+                    link.mf.n_strains = n
+                    link.mf.save()
+                # n = 10
+                G.add_node(link.mf.name,nstrains = n,nodetype='mf',dbid = link.mf.id)
+                nodes[link.mf.name] = True
+            if not link.gcf.name in nodes:
+                # n = len(get_gcf_strain_set(link.gcf))
+                n = link.gcf.n_strains
+                if not n:
+                    n = len(get_gcf_strain_set(link.gcf))
+                    link.gcf.n_strains = n
+                    link.gcf.save()
+                # n = 10
+                gcftypes = link.gcf.gcftypeset
+                overlap = list(set(gcfclasses).intersection(gcftypes))
 
 
-            G.add_node(link.gcf.name,nstrains = n,gcftype = overlap[0].name,nodetype='gcf',dbid = link.gcf.id)
-            nodes[link.gcf.name] = True
-        G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p),validated = link.validated)
+                G.add_node(link.gcf.name,nstrains = n,gcftype = overlap[0].name,nodetype='gcf',dbid = link.gcf.id)
+                nodes[link.gcf.name] = True
+
+            G.add_edge(link.mf.name,link.gcf.name,weight =-np.log(link.p + 1e-10),validated = link.validated)
     
 
     

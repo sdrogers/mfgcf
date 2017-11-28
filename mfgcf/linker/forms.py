@@ -4,3 +4,4 @@ GCF_TYPES = ['allRiPPs','allPKSother','allOthers','allNRPS','allPKSI','allPKS-NR
 
 class GraphForm(forms.Form):
 	families = forms.MultipleChoiceField(required = True,choices = zip(GCF_TYPES,GCF_TYPES),initial = ['allPKSI'])
+	link_threshold = forms.FloatField(required = True, initial = 0.01)

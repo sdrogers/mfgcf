@@ -48,6 +48,10 @@ class BGC(models.Model):
     bgcclass = models.CharField(max_length=200,null=True)
     mibig = models.ForeignKey(MiBIG,null=True)
 
+    @property
+    def antismash_mibig(self):
+        return self.bgctomibig_set.all().order_by('-score')
+
 
 class GCF(models.Model):
     name = models.CharField(max_length=200)
@@ -137,6 +141,11 @@ class SpectrumMedia(models.Model):
     spectrum = models.ForeignKey(Spectrum)
     media = models.ForeignKey(Media)
     count = models.IntegerField()
+
+class BGCtoMiBIG(models.Model):
+    bgc = models.ForeignKey(BGC)
+    mibig = models.ForeignKey(MiBIG)
+    score = models.IntegerField()
 
 # class MFStrain(models.Model):
 #   strain = models.ForeignKey(Strain)
