@@ -51,8 +51,19 @@ class BGC(models.Model):
 
 class GCF(models.Model):
     name = models.CharField(max_length=200)
-    gcftype = models.CharField(max_length=200,null=True)
     analysis = models.ForeignKey(Analysis)
+
+    @property
+    def gcftype(sel):
+        classlinks = self.gcftoclass_set.all()
+        classnames = [c.gcfclass.name for c in classlinks]
+        return ",".join(classnames)
+
+    @property
+    def gcftypeset(self):
+        classlinks = self.gcftoclass_set.all()
+        return set([c.gcfclass for c in classlinks])
+
 
     @property
     def mibig(self):
