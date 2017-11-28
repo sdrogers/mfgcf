@@ -28,7 +28,8 @@
         <h4>Significant links</h4>
         <ul>
             {% for l in links %}
-                <li><a href="/linker/showgcf/{{l.0.gcf.id}}">{{l.0.gcf.name}}</a>, {{l.0.gcf.analysis.name}}, {{l.0.p}} {% if l.1 %} ({% for m in l.1 %}<a href="{{m.url}}" target="_blank">{{m}}</a>&nbsp;&nbsp;{% endfor %}) {% endif %} Validated = <a href="/linker/validate_from_mf/{{l.0.id}}">{{l.0.validated}}</a></li>
+                <li><a href="/linker/showgcf/{{l.0.gcf.id}}">{{l.0.gcf.name}}</a>&nbsp;({{l.0.gcf.gcftype}})&nbsp;, {{l.0.gcf.analysis.name}}, {{l.0.p}} {% if l.1 %} ({% for m in l.1 %}<a href="{{m.url}}" target="_blank">{{m}}</a>&nbsp;&nbsp;{% endfor %}) {% endif %} Validated = <a href="/linker/validate_from_mf/{{l.0.id}}">{{l.0.validated}}</a>
+                </li>
             {% endfor %}
         </ul>
 
