@@ -23,6 +23,11 @@ class Strain(models.Model):
     def __str__(self):
         return self.name
 
+class GCFClass(models.Model):
+    name = models.CharField(max_length = 100,null = False)
+    source = models.CharField(max_length = 100,null = False)
+    def __str__(self):
+        return "{} ({})".format(self.name,self.source)
 
 class MiBIG(models.Model):
     name = models.CharField(max_length = 100,unique = True)
@@ -65,7 +70,9 @@ class GCF(models.Model):
         return len(self.bgcgcf_set.all())
 
 
-
+class GCFtoClass(models.Model):
+    gcf = models.ForeignKey(GCF)
+    gcfclass = models.ForeignKey(GCFClass)
 
 class BGCGCF(models.Model):
     bgc = models.ForeignKey(BGC)
@@ -128,3 +135,5 @@ class MFGCFEdge(models.Model):
     gcf = models.ForeignKey(GCF)
     p = models.FloatField(null = True)
     validated = models.BooleanField(default = False)
+    def __str__(self):
+        return "{}->{}".format(self.mf.name,self.gcf.name)
