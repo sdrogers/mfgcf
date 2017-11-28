@@ -56,16 +56,16 @@ def compute_scores(analysis, metabanalysis, method, parameters):
                 # to account for (possibly) different input parameters...
                 if method == 'hypergeom':
                     threshold = parameters['threshold']
-                    result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
+                    a,result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
                 else:
                     raise SystemExit('Unsupported scoring method: %s' % method)
                 if result:
-                    e, b = MFGCFEdge.objects.get_or_create(mf=mf, gcf=gcf)
+                    e, b = MFGCFEdge.objects.get_or_create(mf=mf, gcf=gcf,method = method)
                     e.p = a
                     e.save()
                     # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
             n_mf_done += 1
-            if n_mf_done % 1 == 0:
+            if n_mf_done % 100 == 0:
                 print "Done {} of {}".format(n_mf_done, len(mf_dict))
 
 
@@ -77,14 +77,15 @@ def hg_test(mf_strains, gcf_strains, n_strains, p_thresh):
     n_mf_strains = len(mf_strains)
     n_gcf_strains = len(gcf_strains)
     overlap = gcf_strains.intersection(mf_strains)
+    a = 1
     if len(overlap) > 0:
         # compute the probability of getting overlap or more if the mf define the urn
         a = 0
         for x in range(len(overlap), n_gcf_strains+1):
             a += hypergeom.pmf(x, n_strains, n_mf_strains, n_gcf_strains)
         if a <= p_thresh:
-            return True
-    return False
+            return a,True
+    return a,False
 
 
 def main():

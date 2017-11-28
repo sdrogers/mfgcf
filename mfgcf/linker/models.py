@@ -52,6 +52,7 @@ class BGC(models.Model):
 class GCF(models.Model):
     name = models.CharField(max_length=200)
     analysis = models.ForeignKey(Analysis)
+    n_strains = models.IntegerField(null = True)
     @property
     def gcftype(self):
         classlinks = self.gcftoclass_set.all()
@@ -102,7 +103,7 @@ class Spectrum(models.Model):
 class MF(models.Model):
     name = models.CharField(max_length=200)
     metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
-
+    n_strains = models.IntegerField(null = True)
     @property
     def libid(self):
         spec = [s.spectrum for s in self.spectrummf_set.all()]
@@ -146,5 +147,6 @@ class MFGCFEdge(models.Model):
     gcf = models.ForeignKey(GCF)
     p = models.FloatField(null = True)
     validated = models.BooleanField(default = False)
+    method = models.CharField(max_length = 100,null = True)
     def __str__(self):
         return "{}->{}".format(self.mf.name,self.gcf.name)
