@@ -52,9 +52,8 @@ class BGC(models.Model):
 class GCF(models.Model):
     name = models.CharField(max_length=200)
     analysis = models.ForeignKey(Analysis)
-
     @property
-    def gcftype(sel):
+    def gcftype(self):
         classlinks = self.gcftoclass_set.all()
         classnames = [c.gcfclass.name for c in classlinks]
         return ",".join(classnames)
@@ -84,6 +83,7 @@ class GCF(models.Model):
 class GCFtoClass(models.Model):
     gcf = models.ForeignKey(GCF)
     gcfclass = models.ForeignKey(GCFClass)
+    original_name = models.CharField(max_length = 100,null = True)
 
 class BGCGCF(models.Model):
     bgc = models.ForeignKey(BGC)
