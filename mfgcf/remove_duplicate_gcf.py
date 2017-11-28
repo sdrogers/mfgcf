@@ -37,13 +37,12 @@ def main():
 			for gcfstring,gcfs in unique.items():
 				if len(gcfs) > 1:
 					orig = gcfs[0]
-					try:
-						gcfclass = GCFClass.objects.get(name = orig.gcftype,source = 'BIGSCAPE')
-					except:
-						print orig.gcftype
-					GCFtoClass.objects.get_or_create(gcf = orig,gcfclass = gcfclass,original_name = gcf.name)
+					gcftype = orig.name.split('_')[1]
+					gcfclass = GCFClass.objects.get(name = gcftype,source = 'BIGSCAPE')
+					GCFtoClass.objects.get_or_create(gcf = orig,gcfclass = gcfclass,original_name = orig.name)
 					for other in gcfs[1:]:
-						gcfclass = GCFClass.objects.get(name = other.gcftype,source = 'BIGSCAPE')
+						gcftype = other.name.split('_')[1]
+						gcfclass = GCFClass.objects.get(name = gcftype,source = 'BIGSCAPE')
 						GCFtoClass.objects.get_or_create(gcf = orig,gcfclass = gcfclass,original_name = other.name)
 						# because edges are computed on strains via BGCs, if the BGCs are the same 
 						# which they have to be to get here, we dont need to add any edges
@@ -54,6 +53,20 @@ def main():
 						gcf_no += 1
 						orig.name = newname
 						orig.save()
+				else:
+					orig = gcfs[0]
+					gcftype = orig.name.split('_')[1]
+					gcfclass = GCFClass.objects.get(name = gcftype,source = 'BIGSCAPE')
+					GCFtoClass.objects.get_or_create(gcf = orig,gcfclass = gcfclass,original_name = orig.name)
+					tokens = orig.name.split('_')
+					if tokens[1] in GCF_TYPES:
+						newname = "GCF_{}_{}".format(analysis.name,gcf_no)
+						gcf_no += 1
+						orig.name = newname
+						orig.save()
+
+
+
 			for o in todelete:
 				o.delete()
 
@@ -96,5 +109,6 @@ def fixnames2():
 
 if __name__ == '__main__':
 	# fixnames() Needed once when simon screwed up the db
-	# main()
-	fixnames2()
+	# fixnames2() Ditto
+	main()
+	
