@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% load md2 %}
+
+{% block body_block %}
+
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+
+      <h1>
+        MFGCF User Guide
+      </h1>
+
+    </section>
+
+    <!-- Main content -->
+    <section class="content container-fluid">
+        {{  markdown_str|markdown }}
+    </section>
+
+{% endblock %}

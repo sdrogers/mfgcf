@@ -67,10 +67,8 @@ desired effect
 
     <!-- Logo -->
     <a href="/" class="logo">
-      <!-- mini logo for sidebar mini 50x50 pixels -->
-      <span class="logo-mini"><b>MF</b>GCF</span>
       <!-- logo for regular state and mobile devices -->
-      <span class="logo-lg"><b>MF</b>GCF</span>
+      <span class="logo-lg"><img src="{% static 'img/logo.png' %}" alt="MFGCF"></span>
     </a>
 
     <!-- Header Navbar -->
@@ -82,8 +80,12 @@ desired effect
       <!-- Navbar Right Menu -->
       <div class="navbar-custom-menu">
         <ul class="nav navbar-nav">
-          <!-- Messages: style can be found in dropdown.less-->
-
+          <li>
+            <a href="/people"><div class="fa fa-user-circle-o"> People</div></a>
+          </li>
+          <li>
+            <a href="/user_guide"><div class="fa fa-question-circle-o"> User Guide</div></a>
+          </li>
         </ul>
       </div>
     </nav>
