@@ -37,7 +37,7 @@ var simulation = d3.forceSimulation()
 
 // Stop the simulation and restart once the data has arrived
 simulation.stop()
-var url = "/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}/{{families}}/{{link_threshold}}"
+var url = "/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}/{{families}}/{{link_threshold|floatformat:'10'}}"
 console.log(url)
 d3.json(url, function(error, graph) {
 
