@@ -94,40 +94,57 @@ def validate_from_gcf(request,link_id):
     print request.META.get('HTTP_')
     return HttpResponseRedirect("/linker/showgcf/{}".format(link.gcf.id))
 
-def show_links(request,analysis_id,metabanalysis_id):
-    context_dict = {}
-    analysis = Analysis.objects.get(id = analysis_id)
-    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
 
+def show_links(request, analysis_id, metabanalysis_id):
+
+    context_dict = {'analysis_id': analysis_id, 'metabanalysis_id': metabanalysis_id}
+    analysis = Analysis.objects.get(id=analysis_id)
+    metabanalysis = MetabAnalysis.objects.get(id=metabanalysis_id)
     context_dict['analysis'] = analysis
     context_dict['metabanalysis'] = metabanalysis
 
-    mfs = MF.objects.filter(metabanalysis = metabanalysis)
-    gcfs = GCF.objects.filter(analysis = analysis)
+    if request.method == 'POST':
+        # form has been submitted
 
-    links = MFGCFEdge.objects.filter(mf__in = mfs,gcf__in = gcfs)
+        # compute the integer value encoding which families to show
+        form = GraphForm(request.POST)
+        if form.is_valid():
 
-    strain_sets = {}
+            gcftypes = form.cleaned_data['families']
+            gcfclasses = []
+            for g in gcftypes:
+                gcfclasses.append(GCFClass.objects.get(name=g, source='BIGSCAPE'))
 
+            mfs = MF.objects.filter(metabanalysis=metabanalysis)
+            gcfs = GCF.objects.filter(analysis=analysis, gcftoclass__gcfclass__in=gcfclasses)
+            p_thresh = form.cleaned_data['link_threshold']
+            links = MFGCFEdge.objects.filter(mf__in=mfs, gcf__in=gcfs, p__lte=p_thresh)
+            strain_sets = {}
 
-    link_list = []
-    for link in links:
-        sub_list = []
-        sub_list.append(link.mf)
-        sub_list.append(link.gcf)
-        sub_list.append(link.p)
-        if not link.mf in strain_sets:
-            strain_sets[link.mf] = get_mf_strain_set(link.mf)
-        if not link.gcf in strain_sets:
-            strain_sets[link.gcf] = get_gcf_strain_set(link.gcf)
+            link_list = []
+            for link in links:
+                sub_list = []
+                sub_list.append(link.mf)
+                sub_list.append(link.gcf)
+                sub_list.append(link.p)
+                if not link.mf in strain_sets:
+                    strain_sets[link.mf] = get_mf_strain_set(link.mf)
+                if not link.gcf in strain_sets:
+                    strain_sets[link.gcf] = get_gcf_strain_set(link.gcf)
 
-        sub_list.append(strain_sets[link.mf].union(strain_sets[link.gcf]))
-        link_list.append(sub_list)
+                sub_list.append(strain_sets[link.mf].union(strain_sets[link.gcf]))
+                link_list.append(sub_list)
 
-    link_list = sorted(link_list,key = lambda x: x[2])
+            link_list = sorted(link_list, key=lambda x: x[2])
+            context_dict['link_list'] = link_list
+            return render(request, 'linker/show_links.html', context_dict)
 
-    context_dict['link_list'] = link_list
-    return render(request,'linker/show_links.html',context_dict)
+    else:
+        form = GraphForm()
+        context_dict['graph_form'] = form
+
+    return render(request, 'linker/link_form.html', context_dict)
+
 
 def show_mibig(request):
     context_dict = {}
