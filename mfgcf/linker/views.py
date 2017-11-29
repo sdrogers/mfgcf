@@ -66,14 +66,6 @@ def show_allmf(request,metabanalysis_id):
     return render(request,'linker/allmf.html',context_dict)
 
 
-def menu(request,analysis_id,metabanalysis_id):
-    analysis = Analysis.objects.get(id = analysis_id)
-    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
-    context_dict = {}
-    context_dict['analysis'] = analysis
-    context_dict['metabanalysis'] = metabanalysis
-    return render(request,'linker/menu.html',context_dict)    
-
 def validate_from_mf(request,link_id):
     link = MFGCFEdge.objects.get(id = link_id)
     if link.validated:
@@ -114,6 +106,15 @@ def show_links(request, analysis_id, metabanalysis_id):
             gcfclasses = []
             for g in gcftypes:
                 gcfclasses.append(GCFClass.objects.get(name=g, source='BIGSCAPE'))
+
+            families = 0
+            for i,g in enumerate(GCF_TYPES):
+                po = len(GCF_TYPES) - 1 - i
+                if g in gcftypes:
+                    families += 2**po
+            print gcftypes,families
+            context_dict['families'] = families
+            context_dict['link_threshold'] = form.cleaned_data['link_threshold']
 
             mfs = MF.objects.filter(metabanalysis=metabanalysis)
             gcfs = GCF.objects.filter(analysis=analysis, gcftoclass__gcfclass__in=gcfclasses)
@@ -204,36 +205,6 @@ def showmf(request,mf_id):
 
     return render(request,'linker/showmf.html',context_dict)
 
-
-def show_graph(request,analysis_id,metabanalysis_id):
-    context_dict = {'analysis_id':analysis_id,'metabanalysis_id':metabanalysis_id}    
-
-    if request.method == 'POST':
-        # form has been submitted
-        
-        # compute the integer value encoding which families to show
-        form = GraphForm(request.POST)
-        if form.is_valid():
-            gcftypes = form.cleaned_data['families']
-            families = 0
-            for i,g in enumerate(GCF_TYPES):
-                po = len(GCF_TYPES) - 1 - i
-                if g in gcftypes:
-                    families += 2**po
-            print gcftypes,families
-            context_dict['families'] = families
-            context_dict['link_threshold'] = form.cleaned_data['link_threshold']
-        return render(request,'linker/show_graph.html',context_dict)
-    else:
-        form = GraphForm()
-        context_dict['graph_form'] = form
-
-    analysis = Analysis.objects.get(id = analysis_id)
-    metabanalysis = MetabAnalysis.objects.get(id = metabanalysis_id)
-    context_dict['analysis'] = analysis
-    context_dict['metabanalysis'] = metabanalysis
-
-    return render(request,'linker/graph_form.html',context_dict)
 
 def get_overlap_strain_set(gcf,mf):
     gcf_strains = get_gcf_strain_set(gcf)

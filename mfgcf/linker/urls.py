@@ -4,7 +4,6 @@ from . import views
 
 urlpatterns = [
 	url(r'^$',views.index,name = 'index'),
-	url(r'^show_graph/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)$', views.show_graph,name='show_graph'),
 	url(r'^show_links/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)$', views.show_links,name='show_links'),
 	# url(r'^get_graph/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)/(?P<families>\w+)$', views.get_graph,name='get_graph'),
 	url(r'^get_graph/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)/(?P<families>\w+)/(?P<link_threshold>\d+(?:\.\d+))$', views.get_graph,name='get_graph'),
@@ -22,6 +21,5 @@ urlpatterns = [
 	url(r'^validate_from_mf/(?P<link_id>\w+)$',views.validate_from_mf,name = 'validate_from_mf'),
 	url(r'^mibig/(?P<mibig_id>\w+)$',views.show_mibig_bgc,name = 'show_mibig_bgc'),
 	url(r'^vlinks$',views.show_validated,name = 'show_validated'),
-	url(r'^menu/(?P<analysis_id>\w+)/(?P<metabanalysis_id>\w+)$', views.menu,name='menu'),
 ]
 
