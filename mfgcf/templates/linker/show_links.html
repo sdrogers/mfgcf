@@ -13,6 +13,10 @@
         stroke: #fff;
         stroke-width: 1.5px;
     }
+    .nodes .selected {
+      stroke: black;
+      stroke-width: 2.0px;
+    }
 </style>
 
 {% endblock %}
@@ -41,7 +45,15 @@
             <div class="box-header">
               <h4 class="box-title">
                   MF-GCF Network
-                  <small><div id="infodiv">Move your mouse over a node or an edge to see its details.</div></small>
+                  <small>
+                      <div id="instruction">
+                        Move your mouse over a node or an edge to see its details.
+                        Click a node to search.
+                      </div>
+                      <div id="infodiv">
+                          &nbsp;
+                      </div>
+                  </small>
               </h4>
             </div>
             <!-- /.box-header -->
@@ -63,7 +75,15 @@
             <div class="box-body">
               <table id="link_table" class="table table-bordered table-striped">
                 <thead>
-            		<tr><th>GCF</th><th>MF</th><th>p</th><th>GCF type</th><th>Shared strains</th></tr>
+            		<tr>
+                        <th>GCF</th>
+                        <th>MF</th>
+                        <th>p</th>
+                        <th>GCF type</th>
+                        <th>GCF MiBIG</th>
+                        <th>MF Library IDs</th>
+                        <th>Shared strains</th>
+                    </tr>
                 </thead>
                 <tbody>
                 {% for row in link_list %}
@@ -71,6 +91,8 @@
                         <td><a href="/linker/showmf/{{row.0.id}}" target="_blank">{{row.0.name}}</a></td>
                         <td>{{row.2|floatformat:"6"}}</td>
                         <td>{{row.1.gcftype}}</td>
+                        <td>{{row.1.mibig}}</td>
+                        <td>{{row.2.libid}}</td>
                         <td>
                             {% for s in row.3 %}
                                 {{s}}&nbsp;

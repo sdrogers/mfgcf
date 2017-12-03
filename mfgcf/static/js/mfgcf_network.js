@@ -1,5 +1,5 @@
-var width = 600;
-var height = 300;
+var width = 1000;
+var height = 500;
 var border = 1;
 var bordercolor='black';
 
@@ -82,10 +82,13 @@ d3.json(url, function (error, graph) {
         })
         .on("mouseover", showinfo)
         .on("mouseout", removeinfo)
+        .on("click", selectnode)
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended));
+
+    var current = undefined;
 
     simulation
         .nodes(graph.nodes)
@@ -156,14 +159,48 @@ d3.json(url, function (error, graph) {
             });
         }
 
-        // update the current search term in data table
-        table.search( d.id ).draw();
+    }
+
+    function selectnode(d) {
+
+        // debugger;
+        console.log(d.id + " is selected");
+
+        sel = d3.select(this); // the currently selected node
+        if (sel.classed("selected")) {
+
+            /*
+            if already selected, then:
+            - unselect the current node
+            - set opacity of all circles to 100%
+            - remove the current search term from data table
+             */
+
+            sel.classed("selected", false);
+            d3.selectAll("circle").attr("opacity", 1.0);
+            table.search("").draw();
+
+        } else {
+
+            /*
+            otherwise:
+            - make the current node selected
+            - set opacity of all circles to 50%
+            - set the current node id as the search term for data table
+             */
+
+            sel.classed("selected", true);
+            d3.selectAll("circle").attr("opacity", 0.50);
+            sel.attr("opacity", 1.0);
+            table.search(d.id).draw();
+
+        }
 
     }
 
     function removeinfo() {
         infodiv = document.getElementById("infodiv");
-        infodiv.innerHTML = "Move your mouse over a node or an edge to see its details.";
+        infodiv.innerHTML = "&nbsp;";
     }
 
     function ticked() {

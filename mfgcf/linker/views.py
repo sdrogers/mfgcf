@@ -120,8 +120,11 @@ def show_links(request, analysis_id, metabanalysis_id):
             gcfs = GCF.objects.filter(analysis=analysis, gcftoclass__gcfclass__in=gcfclasses)
             p_thresh = form.cleaned_data['link_threshold']
             links = MFGCFEdge.objects.filter(mf__in=mfs, gcf__in=gcfs, p__lte=p_thresh)
-            strain_sets = {}
+            links2 = MFGCFEdge.objects.filter(validated=True, mf__in=mfs, gcf__in=gcfs)
+            links = list(set(list(links) + list(links2)))
+            print "{},{},found {} links".format(analysis, metabanalysis, len(links))
 
+            strain_sets = {}
             link_list = []
             for link in links:
                 sub_list = []
