@@ -113,7 +113,9 @@
 
 {% block js_block %}
 
+<script src="{% static 'js/d3.min.js' %}"></script>
 <script>
+
     var table = $('#link_table').DataTable({
         dom: 'Bfrtip',
         buttons: [
@@ -121,11 +123,34 @@
         ],
         "order": [[ 2, "desc"]],
     });
+
     var url = "/linker/get_graph/{{analysis_id}}/{{metabanalysis_id}}/{{families}}/{{link_threshold|floatformat:'10'}}"
     console.log(url);
-</script>
 
-<script src="{% static 'js/d3.min.js' %}"></script>
+</script>
 <script src="{% static 'js/mfgcf_network.js' %}"></script>
+<script>
+
+    $('#link_table').on('search.dt', function() {
+
+        var value = $('.dataTables_filter input').val();
+
+        // make all nodes unselected with each keypress
+        d3.selectAll("circle").attr("opacity", 1.0)
+            .classed("selected", false);
+
+        // and select the node that we want
+        node.each(function(d) {
+            if (d.id === value) {
+                sel = d3.select(this);
+                sel.classed("selected", true);
+                d3.selectAll("circle").attr("opacity", 0.50);
+                sel.attr("opacity", 1.0);
+            }
+        })
+
+    });
+
+</script>
 
 {% endblock %}

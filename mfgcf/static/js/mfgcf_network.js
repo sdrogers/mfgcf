@@ -27,6 +27,9 @@ var simulation = d3.forceSimulation()
     // .force("charge", d3.forceManyBody())
     .force("center", d3.forceCenter(width / 2, height / 2));
 
+var link = null;
+var node = null;
+
 // Stop the simulation and restart once the data has arrived
 simulation.stop()
 d3.json(url, function (error, graph) {
@@ -40,7 +43,7 @@ d3.json(url, function (error, graph) {
         svg.selectAll("line").attr("transform", d3.event.transform).attr("translate", d3.event.translate);
     }
 
-    var link = svg.append("g")
+    link = svg.append("g")
         .attr("class", "links")
         .selectAll("line")
         .data(graph.links)
@@ -62,7 +65,7 @@ d3.json(url, function (error, graph) {
         .on("mouseover", showedgeinfo)
         .on("mouseout", removeinfo);
 
-    var node = svg.append("g")
+    node = svg.append("g")
         .attr("class", "nodes")
         .selectAll("circle")
         .data(graph.nodes)
@@ -162,9 +165,6 @@ d3.json(url, function (error, graph) {
     }
 
     function selectnode(d) {
-
-        // debugger;
-        console.log(d.id + " is selected");
 
         sel = d3.select(this); // the currently selected node
         if (sel.classed("selected")) {
