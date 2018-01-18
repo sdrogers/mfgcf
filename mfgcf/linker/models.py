@@ -117,7 +117,8 @@ class MF(models.Model):
                 if not libid:
                     libid = []
                 libid.append(s.libraryid)
-        return libid
+        return ",".join(set(libid))
+
 
 class BGCStrain(models.Model):
     strain = models.ForeignKey(Strain)
