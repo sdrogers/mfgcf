@@ -1,37 +1,106 @@
 {% extends 'base.html' %}
 
 {% load staticfiles %}
+{% load linker_tags %}
 
 {% block body_block %}
 
     <!-- Content Header (Page header) -->
     <section class="content-header">
-      <h1>MF: {{mf.name}} from {{mf.metabanalysis.name}}</h1>
+        <h1>MF: {{ mf.name }} from {{ mf.metabanalysis.name }}</h1>
     </section>
 
     <!-- Main content -->
     <section class="content container-fluid">
 
-        <h4>Strains</h4>
-        <ul>
-            {% for s in strains %}
-                <li>{{s.name}}, {{s.taxonomy}}, {{s.organism}}</li>
-            {% endfor %}
-        </ul>
-        <h4>Spectra:</h4>
-        <ul>
-            {% for s in spectra %}
-                <li>{{s.0.rowid}}, {{s.0.libraryid}}, {% if s.0.link %}<a href="{{s.0.link}}">link</a>{% endif %}, {% for st in s.1 %} {{st.name}}&nbsp; {% endfor %}</li>
-            {% endfor %}
-        </ul>
+        {% include "linker/annotation.html" with form_action="/linker/showmf/"|addstr:mf_id %}
 
-        <h4>Significant links</h4>
-        <ul>
-            {% for l in links %}
-                <li><a href="/linker/showgcf/{{l.0.gcf.id}}">{{l.0.gcf.name}}</a>&nbsp;({{l.0.gcf.gcftype}})&nbsp;, {{l.0.gcf.analysis.name}}, {{l.0.p}} {% if l.1 %} ({% for m in l.1 %}<a href="{{m.url}}" target="_blank">{{m}}</a>&nbsp;&nbsp;{% endfor %}) {% endif %} Validated = <a href="/linker/validate_from_mf/{{l.0.id}}">{{l.0.validated}}</a>
-                </li>
-            {% endfor %}
-        </ul>
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title">Strains</h3>
+            </div>
+            <div class="box-body">
+                <table class="table">
+                    <tr>
+                        <th>Name</th>
+                        <th>Taxonomy</th>
+                        <th>Organism</th>
+                    </tr>
+                    {% for s in strains %}
+                        <tr>
+
+                            <td>{{ s.name }}</td>
+                            <td>{{ s.taxonomy }}</td>
+                            <td>{{ s.organism }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <!-- /.box-body -->
+        </div>
+
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title">Spectra</h3>
+            </div>
+            <div class="box-body">
+                <table class="table">
+                    <tr>
+                        <th>rowid</th>
+                        <th>libraryid</th>
+                        <th>link</th>
+                        <th>strains</th>
+                    </tr>
+                    {% for s in spectra %}
+                        <tr>
+                            <td>{{ s.0.rowid }}</td>
+                            <td>{{ s.0.libraryid }}</td>
+                            <td>{% if s.0.link %}
+                                <a href="{{ s.0.link }}">link</a>{% endif %}</td>
+                            <td>{% for st in s.1 %} {{ st.name }}{% endfor %}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <!-- /.box-body -->
+        </div>
+
+        <div class="box box-warning">
+            <div class="box-header with-border">
+                <h3 class="box-title">Significant Links</h3>
+            </div>
+            <div class="box-body">
+                <table class="table">
+                    <tr>
+                        <th>GCF Name</th>
+                        <th>GCF Type</th>
+                        <th>Analysis</th>
+                        <th>p-value</th>
+                        <th>MiBIG</th>
+                        <th>Validated?</th>
+                    </tr>
+                    {% for l in links %}
+                        <tr>
+                            <td><a href="/linker/showgcf/{{ l.0.gcf.id }}">{{ l.0.gcf.name }}</a></td>
+                            <td>{{ l.0.gcf.gcftype }}</td>
+                            <td>{{ l.0.gcf.analysis.name }}</td>
+                            <td>{{ l.0.p|floatformat:5 }}</td>
+                            <td>
+                                {% if l.1 %}
+                                    {% for m in l.1 %}
+                                        <a href="{{ m.url }}" target="_blank">{{ m }}</a>&nbsp;&nbsp;
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
+                            <td><a
+                                    href="/linker/validate_from_mf/{{ l.0.id }}">{{ l.0.validated }}</a></td>
+                        </tr>
+                    {% endfor %}
+                </table>
+
+            </div>
+            <!-- /.box-body -->
+        </div>
 
     </section>
 

@@ -1,6 +1,10 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -39,6 +43,19 @@ class MiBIG(models.Model):
         return "{}: {}".format(self.name,self.product)
 
 
+# see https://simpleisbetterthancomplex.com/tutorial/2016/10/13/how-to-use-generic-relations.html
+class Annotation(models.Model):
+
+    user = models.ForeignKey(User)
+    message = models.CharField(max_length=1024)
+    date = models.DateTimeField(auto_now_add=True)
+
+    # Below the mandatory fields for generic relation
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey()
+
+
 class BGC(models.Model):
     name = models.CharField(max_length=200)
     analysis = models.ForeignKey(Analysis,null=True)
@@ -47,6 +64,7 @@ class BGC(models.Model):
     product = models.CharField(max_length=200,null=True)
     bgcclass = models.CharField(max_length=200,null=True)
     mibig = models.ForeignKey(MiBIG,null=True)
+    annotations = GenericRelation(Annotation)
 
     @property
     def antismash_mibig(self):
@@ -57,6 +75,8 @@ class GCF(models.Model):
     name = models.CharField(max_length=200)
     analysis = models.ForeignKey(Analysis)
     n_strains = models.IntegerField(null = True)
+    annotations = GenericRelation(Annotation)
+
     @property
     def gcftype(self):
         classlinks = self.gcftoclass_set.all()
@@ -101,6 +121,7 @@ class Spectrum(models.Model):
     link = models.CharField(max_length = 1024,null=True)
     parentmass = models.FloatField(null=True)
     precursormass = models.FloatField(null=True)
+    annotations = GenericRelation(Annotation)
     def __str__(self):
         return "{},{},{}".format(self.rowid,str(self.metabanalysis),self.libraryid)
 
@@ -108,6 +129,7 @@ class MF(models.Model):
     name = models.CharField(max_length=200)
     metabanalysis = models.ForeignKey(MetabAnalysis,null=True)
     n_strains = models.IntegerField(null = True)
+    annotations = GenericRelation(Annotation)
     @property
     def libid(self):
         spec = [s.spectrum for s in self.spectrummf_set.all()]
@@ -160,3 +182,4 @@ class MFGCFEdge(models.Model):
     method = models.CharField(max_length = 100,null = True)
     def __str__(self):
         return "{}->{}".format(self.mf.name,self.gcf.name)
+

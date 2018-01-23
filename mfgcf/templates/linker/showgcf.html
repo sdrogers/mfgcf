@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% load staticfiles %}
+{% load linker_tags %}
 
 {% block body_block %}
 
@@ -12,43 +13,103 @@
     <!-- Main content -->
     <section class="content container-fluid">
 
-        <h4>Original GCFs</h4>
-        <p>GCFs are duplicated -- these are the refs to the original so they can be found in the bigscape output. The number at the end refers to the number in the Bigscape output file.</p>
-        <ul>
-            {% for cl in class_links %}
-                <li>{{cl.gcfclass.name}}, {{cl.original_name}}</li>
-            {% endfor %}
-        </ul>
+        {% include "linker/annotation.html" with form_action="/linker/showgcf/"|addstr:gcf_id %}
 
-        <h4>Strains</h4>
-        <ul>
-            {% for s in strains %}
-                <li>{{s.name}}, {{s.taxonomy}}, {{s.organism}}</li>
-            {% endfor %}
-        </ul>
-        <h4>BGCs:</h4>
-        <ul>
-            {% for b in bgc %}
-                <li>{{b.0.name}}, {{b.0.product}}, {{b.1.name}} {% if b.0.mibig %} <A href="{{b.0.mibig.url}}" target="_blank">{{b.0.mibig}} </A>{% endif %} </li>
-                    {% if b.0.antismash_mibig %}
-                    <ul>
-                        <li>MiBIGs linked at AntiSmash stage:</li>
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title">Original Gene Cluster Families</h3>
+            </div>
+            <div class="box-body">
+                <p>
+                    GCFs are duplicated. These are the references
+                    to the original so they can be found in the BiG-SCAPE output.
+                    The number at the end refers to the number in the BiG-SCAPE output file.
+                </p>
+                <table class="table">
+                    <tr>
+                        <th>GCF Class Name</th>
+                        <th>Original Name</th>
+                    </tr>
+                    {% for cl in class_links %}
+                        <tr>
+                            <td>{{cl.gcfclass.name}}</td>
+                            <td>{{cl.original_name}}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title">Strains</h3>
+            </div>
+            <div class="box-body">
+                <table class="table">
+                    <tr>
+                        <th>Name</th>
+                        <th>Taxonomy</th>
+                        <th>Organism</th>
+                    </tr>
+                    {% for s in strains %}
+                        <tr>
+
+                            <td>{{ s.name }}</td>
+                            <td>{{ s.taxonomy }}</td>
+                            <td>{{ s.organism }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <!-- /.box-body -->
+        </div>
+
+        <div class="box box-success">
+            <div class="box-header with-border">
+                <h3 class="box-title">Biosynthetic Gene Clusters</h3>
+            </div>
+            <div class="box-body">
+                <ul>
+                    {% for b in bgc %}
+                        <li>{{b.0.name}}, {{b.0.product}}, {{b.1.name}} {% if b.0.mibig %} <A href="{{b.0.mibig.url}}" target="_blank">{{b.0.mibig}} </A>{% endif %} </li>
+                            {% if b.0.antismash_mibig %}
                             <ul>
-                            {% for a in b.0.antismash_mibig %}
-                            <li><A href="{{a.mibig.url}}" target="_blank">{{ a.mibig }} ({{a.score}})</A></li>
-                            {% endfor %}
+                                <li>MiBIGs linked at AntiSmash stage:</li>
+                                    <ul>
+                                    {% for a in b.0.antismash_mibig %}
+                                    <li><A href="{{a.mibig.url}}" target="_blank">{{ a.mibig }} ({{a.score}})</A></li>
+                                    {% endfor %}
+                                    </ul>
                             </ul>
-                    </ul>
-                    {% endif %}
-            {% endfor %}
-        </ul>
+                            {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
 
-        <h4>Significant links</h4>
-        <ul>
-            {% for l in links %}
-                <li><a href="/linker/showmf/{{l.mf.id}}">{{l.mf.name}}</a>, {{l.mf.metabanalysis.name}}, {{l.p}}, Validated = <a href="/linker/validate_from_gcf/{{l.id}}">{{l.validated}}</a></li>
-            {% endfor %}
-        </ul>
+        <div class="box box-warning">
+            <div class="box-header with-border">
+                <h3 class="box-title">Significant Links</h3>
+            </div>
+            <div class="box-body">
+                <table class="table">
+                    <tr>
+                        <th>MF Name</th>
+                        <th>Analysis</th>
+                        <th>p-value</th>
+                        <th>Validated</th>
+                    </tr>
+                    {% for l in links %}
+                        <tr>
+                            <td><a href="/linker/showmf/{{l.mf.id}}">{{l.mf.name}}</a></td>
+                            <td>{{ l.mf.metabanalysis.name }}</td>
+                            <td>{{ l.p|floatformat:5 }}</td>
+                            <td><a href="/linker/validate_from_gcf/{{l.id}}">{{l.validated}}</a></td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
 
     </section>
 

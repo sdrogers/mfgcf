@@ -184,7 +184,21 @@ def showgcf(request,gcf_id):
     context_dict['bgc'] = zip(bgc,strain)
 
     context_dict['links'] = MFGCFEdge.objects.filter(gcf = gcf).order_by('p')
+    context_dict['gcf_id'] = gcf.id
+    context_dict['annotations'] = gcf.annotations.all()
 
+    if request.method == 'POST':
+        form = AnnotationForm(request.POST)
+        if form.is_valid():
+
+            # save the form
+            annotation = form.cleaned_data['annotation']
+            user = request.user
+            user = User.objects.get(username="joewandy")
+            gcf.annotations.create(message=annotation, user=user)
+
+    form = AnnotationForm()
+    context_dict['annotation_form'] = form
     return render(request,'linker/showgcf.html',context_dict)
 
 def showmf(request,mf_id):
@@ -202,10 +216,23 @@ def showmf(request,mf_id):
     mibig = []
     for l in links:
         mibig.append(l.gcf.mibig)
-
     
     context_dict['links'] = zip(links,mibig)
+    context_dict['mf_id'] = mf.id
+    context_dict['annotations'] = mf.annotations.all()
 
+    if request.method == 'POST':
+        form = AnnotationForm(request.POST)
+        if form.is_valid():
+
+            # save the form
+            annotation = form.cleaned_data['annotation']
+            user = request.user
+            user = User.objects.get(username="joewandy")
+            mf.annotations.create(message=annotation, user=user)
+
+    form = AnnotationForm()
+    context_dict['annotation_form'] = form
     return render(request,'linker/showmf.html',context_dict)
 
 
