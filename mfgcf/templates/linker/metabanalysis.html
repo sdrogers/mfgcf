@@ -14,7 +14,7 @@
       </h1>
 
       <ol class="breadcrumb">
-        <li><a href="/"><i class="fa fa-dashboard"></i> MFGCF</a></li>
+        <li><a href="/"><i class="fa fa-dashboard"></i> NPLinker</a></li>
         <li><a href="/linker">Linker</a></li>
         <li class="active">MF Analysis</li>
       </ol>
@@ -24,12 +24,21 @@
     <!-- Main content -->
     <section class="content container-fluid">
 
-        <h4>Choose a GCF Analysis to link</h4>
-        <ul>
-            {% for a in analyses %}
-                <li><a href="/linker/show_links/{{a.id}}/{{metabanalysis.id}}">{{a.name}}</a></li>
-            {% endfor %}
-        </ul>
+        <div class="box box-solid">
+            <div class="box-header with-border">
+                <h3 class="box-title">Choose a Gene Cluster Family (GCF) Analysis to link</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+                <ul>
+                    {% for a in analyses %}
+                        <li><a href="/linker/show_links/{{a.id}}/{{metabanalysis.id}}">{{a.name}}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <!-- /.box-body -->
+        </div>
+        <!-- /.box -->
 
     </section>
 
