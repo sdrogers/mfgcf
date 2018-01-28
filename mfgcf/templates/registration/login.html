@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block body_block %}
+
+    <br/>
+    <div class="login-box">
+        <!-- /.login-logo -->
+        <div class="login-box-body">
+            <p class="login-box-msg">Sign in to create a new analysis</p>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
+            </form>
+
+            <a href="/register" class="text-center">Register</a>
+
+        </div>
+        <!-- /.login-box-body -->
+    </div>
+    <!-- /.login-box -->
+
+{% endblock %}

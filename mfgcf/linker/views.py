@@ -54,7 +54,7 @@ def show_spectra(request, metabanalysis_id):
 
 def show_metabanalysis(request, metabanalysis_id):
     metabanalysis = MetabAnalysis.objects.get(id=metabanalysis_id)
-    analyses = Analysis.objects.all()
+    analyses = Analysis.objects.all().order_by('name').order_by('name')
     context_dict = {}
     context_dict['metabanalysis'] = metabanalysis
     context_dict['analyses'] = analyses
@@ -199,7 +199,6 @@ def showgcf(request, gcf_id):
             # save the form
             annotation = form.cleaned_data['annotation']
             user = request.user
-            user = User.objects.get(username="joewandy")
             gcf.annotations.create(message=annotation, user=user)
 
     form = AnnotationForm()
@@ -233,7 +232,6 @@ def showmf(request, mf_id):
             # save the form
             annotation = form.cleaned_data['annotation']
             user = request.user
-            user = User.objects.get(username="joewandy")
             mf.annotations.create(message=annotation, user=user)
 
     form = AnnotationForm()

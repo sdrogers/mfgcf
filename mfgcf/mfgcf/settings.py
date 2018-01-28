@@ -74,6 +74,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'mfgcf.urls'
+LOGIN_REDIRECT_URL = 'home'
 
 TEMPLATES = [
     {

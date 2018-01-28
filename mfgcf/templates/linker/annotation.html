@@ -1,48 +1,64 @@
-<div class="box box-primary collapsed-box">
+{% if request.POST %}
+
+    <div class="box box-primary box-solid">
+    <div class="box-header with-border">
+        <h3 class="box-title">Annotations</h3>
+
+        <div class="box-tools pull-right">
+            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+            </button>
+        </div>
+        <!-- /.box-tools -->
+    </div>
+    <!-- /.box-header -->
+
+{% else %}
+
+    <div class="box box-primary collapsed-box box-solid">
+    <div class="box-header with-border">
+        <h3 class="box-title">Annotations</h3>
+
+        <div class="box-tools pull-right">
+            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+            </button>
+        </div>
+        <!-- /.box-tools -->
+    </div>
+    <!-- /.box-header -->
+
+{% endif %}
+
+<div class="box-body">
 
     <form id="annotation_form" method="post"
           action={{ form_action }} role="form">
 
-        <div class="box-header with-border">
-            <h3 class="box-title">Annotation</h3>
-            <div class="box-tools pull-right">
-                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
-                </button>
+        <ul>
+            {% for annot in annotations %}
+                <li>{{ annot.message }} by {{ annot.user }} ({{ annot.date }})</li>
+            {% endfor %}
+        </ul>
+
+        {% csrf_token %}
+
+        {% for hidden in annotation_form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
+
+        {% for field in annotation_form.visible_fields %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                <p>{{ field.errors }}</p>
+                <p>{{ field }}
             </div>
-        </div>
+        {% endfor %}
 
-        <div class="box-body">
-
-            <ul>
-                {% for annot in annotations %}
-                    <li>{{ annot.message }} by {{ annot.user }} ({{ annot.date }})</li>
-                {% endfor %}
-            </ul>
-
-            <!-- /.box-header -->
-            <!-- form start -->
-
-            <!-- h1>Form action: {{ form_action }}</h1 -->
-            {% csrf_token %}
-
-            {% for hidden in annotation_form.hidden_fields %}
-                {{ hidden }}
-            {% endfor %}
-
-            {% for field in annotation_form.visible_fields %}
-                <div class="form-group">
-                    <label>{{ field.label }}</label>
-                    <p>{{ field.errors }}</p>
-                    <p>{{ field }}
-                </div>
-            {% endfor %}
-
-        </div>
-
-        <div class="box-footer">
-            <input type="submit" name="submit" value="Add Annotation" class="btn btn-primary"/>
-        </div>
+        <input type="submit" name="submit" value="Add Annotation" class="btn btn-primary"/>
 
     </form>
 
+
 </div>
+<!-- /.box-body -->
+</div>
+<!-- /.box -->
