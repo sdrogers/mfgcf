@@ -39,21 +39,25 @@
             {% endfor %}
         </ul>
 
-        {% csrf_token %}
+        {% if user.is_authenticated %}
 
-        {% for hidden in annotation_form.hidden_fields %}
-            {{ hidden }}
-        {% endfor %}
+            {% csrf_token %}
 
-        {% for field in annotation_form.visible_fields %}
-            <div class="form-group">
-                <label>{{ field.label }}</label>
-                <p>{{ field.errors }}</p>
-                <p>{{ field }}
-            </div>
-        {% endfor %}
+            {% for hidden in annotation_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
 
-        <input type="submit" name="submit" value="Add Annotation" class="btn btn-primary"/>
+            {% for field in annotation_form.visible_fields %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    <p>{{ field.errors }}</p>
+                    <p>{{ field }}
+                </div>
+            {% endfor %}
+
+            <input type="submit" name="submit" value="Add Annotation" class="btn btn-primary"/>
+
+        {% endif %}
 
     </form>
 
