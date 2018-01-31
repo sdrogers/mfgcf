@@ -7,3 +7,4 @@ gunicorn==19.7.1
 MySQL-python==1.2.5
 django-markdown2==0.3.0
 markdown2==2.3.4
+django-chunked-upload==1.1.2
