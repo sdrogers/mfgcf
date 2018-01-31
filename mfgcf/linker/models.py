@@ -147,7 +147,7 @@ class MF(models.Model):
     @property
     def libid(self):
         spec = [s.spectrum for s in self.spectrummf_set.all()]
-        libid = None
+        libid = []
         for s in spec:
             if not s.libraryid == 'N/A':
                 if not libid:
