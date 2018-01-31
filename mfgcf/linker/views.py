@@ -1,6 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.template import RequestContext
 from django.db import transaction
+from django.urls import reverse
+
+from django.views.generic.base import TemplateView
+from chunked_upload.views import ChunkedUploadView, ChunkedUploadCompleteView
+from .models import MyChunkedUpload
 
 from scipy.stats import hypergeom
 # Create your views here.
@@ -363,3 +369,52 @@ def get_graph(request, analysis_id, metabanalysis_id, families, link_threshold):
             G.add_edge(link.mf.name, link.gcf.name, weight=-np.log(link.p + 1e-10), validated=link.validated)
 
     return JsonResponse(json_graph.node_link_data(G))
+
+
+class UploadAntiSmash(TemplateView):
+    template_name = 'linker/upload.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(UploadAntiSmash, self).get_context_data(**kwargs)
+        context[
+            'message'] = 'Provide an antiSMASH output in zipped format. This additional data will be used to display ' \
+                         'additional information linked to a biosynthetic gene cluster.'
+        context['upload_handler_view'] = reverse('upload_anti_smash_handler')
+        context['upload_complete_view'] = reverse('upload_anti_smash_complete')
+        return context
+
+
+class UploadAntiSmashHandler(ChunkedUploadView):
+    model = MyChunkedUpload
+    field_name = 'the_file'
+
+    def check_permissions(self, request):
+        # Allow non authenticated users to make uploads
+        pass
+
+
+class UploadAntiSmashComplete(ChunkedUploadCompleteView):
+    model = MyChunkedUpload
+
+    def check_permissions(self, request):
+        # Allow non authenticated users to make uploads
+        pass
+
+    def on_completion(self, uploaded_file, request):
+        # Do something with the uploaded file. E.g.:
+        # * Store the uploaded file on another model:
+        # SomeModel.objects.create(user=request.user, file=uploaded_file)
+        # * Pass it as an argument to a function:
+        # function_that_process_file(uploaded_file)
+
+        # unzip the uploaded file
+        print 'Processing', uploaded_file.file.url
+
+        # store a pointer to the unzipped antismash output folder
+
+
+
+    def get_response_data(self, chunked_upload, request):
+        filesize = float(chunked_upload.offset)/(1024*1024)
+        return {'message': ("You successfully uploaded %s (%.2f MB)!" %
+                            (chunked_upload.filename, filesize))}
