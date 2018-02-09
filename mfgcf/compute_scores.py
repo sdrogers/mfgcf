@@ -4,6 +4,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mfgcf.settings")
 
 import argparse
 from scipy.stats import hypergeom
+import scipy
 
 import django
 django.setup()
@@ -43,7 +44,7 @@ def compute_scores(analysis, metabanalysis, method, parameters):
         gcf_dict[gcf] = set(gcf_strains)
 
     # Computing hypergeometric stats
-    print "Computing hg stats"
+    print "Computing overlap stats (scoring method: %s)" % method
     n_strains = len(strains)
     n_mf_done = 0
     with transaction.atomic():
@@ -56,7 +57,12 @@ def compute_scores(analysis, metabanalysis, method, parameters):
                 # to account for (possibly) different input parameters...
                 if method == 'hypergeom':
                     threshold = parameters['threshold']
-                    a,result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
+                    a, result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
+                elif method == 'correlation':
+                    threshold = parameters['threshold']
+                    a, result = correlation_test(mf_strains, gcf_strains, n_strains, threshold)
+                elif method == 'generative':
+                    a, result = generative_test(mf_strains, gcf_strains, n_strains, parameters)
                 else:
                     raise SystemExit('Unsupported scoring method: %s' % method)
                 if result:
@@ -67,6 +73,59 @@ def compute_scores(analysis, metabanalysis, method, parameters):
             n_mf_done += 1
             if n_mf_done % 100 == 0:
                 print "Done {} of {}".format(n_mf_done, len(mf_dict))
+
+
+def generative_test(mf_strains, gcf_strains, n_strains, parameters):
+    """
+    generative model for MF / GCF probability.
+    Given the presence / absence of strain in GCF, how likely is the particular
+    presence / absence of strains in the MS data?
+    Parameters are probability of the BGC being cryptic, and the MS FP rate
+    (i.e. probability of MS signal in the abscence of BGC)
+    """
+    threshold = parameters['threshold']
+    p_cryptic = parameters['p_cryptic']
+    p_noise = parameters['p_noise']
+
+    mf_strains = set(mf_strains)
+    gcf_strains = set(gcf_strains)
+    intersection_count = len(mf_strains.intersection(gcf_strains))
+    cryptic_count = len(gcf_strains - mf_strains)
+    fp_count = len(mf_strains - gcf_strains)
+    tn_count = n_strains - (intersection_count + cryptic_count + fp_count)
+
+    value = (1 - p_cryptic) ** intersection_count \
+        * p_cryptic ** cryptic_count \
+        * p_noise ** fp_count \
+        * (1 - p_noise) ** tn_count
+
+    if value > threshold:
+        return value, True
+    else:
+        return value, False
+
+
+def correlation_test(list_1, list_2, n_strains, p_thresh):
+    """
+    Pearson's correlation test. Returns True if p value is below threshold.
+    """
+    all_ids = set.union(set(list_1), set(list_2))
+    vector_1 = [1 if i in list_1 else 0 for i in all_ids]
+    vector_2 = [1 if i in list_2 else 0 for i in all_ids]
+
+    if len(set(vector_1)) == 1 or len(set(vector_2)) == 1:
+        return 1.0, False
+
+    tail = [0] * (n_strains - len(all_ids))
+    vector_1.extend(tail)
+    vector_2.extend(tail)
+
+    correlation, p_value = scipy.stats.pearsonr(vector_1, vector_2)
+
+    if p_value < p_thresh:
+        return p_value, True
+    else:
+        return p_value, False
 
 
 def hg_test(mf_strains, gcf_strains, n_strains, p_thresh):
@@ -84,8 +143,8 @@ def hg_test(mf_strains, gcf_strains, n_strains, p_thresh):
         for x in range(len(overlap), n_gcf_strains+1):
             a += hypergeom.pmf(x, n_strains, n_mf_strains, n_gcf_strains)
         if a <= p_thresh:
-            return a,True
-    return a,False
+            return a, True
+    return a, False
 
 
 def main():
@@ -94,6 +153,8 @@ def main():
     parser.add_argument(dest='metabanalysis_name', help='Metabolic analysis name')
     parser.add_argument('-m', dest='method', help='Scoring method (currently only hypergeom) (default: hypergeom (obviously))', default='hypergeom')
     parser.add_argument('-t', dest='threshold', help='Threshold for score (default: 0.05)', default=0.05)
+    parser.add_argument('--p_cryptic', dest='p_cryptic', help='Probability of a cluster being cryptic (generative only, default: 0.33)', default=0.33)
+    parser.add_argument('--p_noise', dest='p_noise', help='Probability of FP in MS, given BGC data (includes BGC FN rate) (generative only, default 0.01)', default=0.01)
     args = parser.parse_args()
 
     method = args.method
@@ -106,7 +167,9 @@ def main():
 
     # Eventually add p(cryptic), p(noise), etc. for other scoring methods
     parameters = {
-            'threshold': threshold,
+            'threshold': float(threshold),
+            'p_cryptic': float(args.p_cryptic),
+            'p_noise': float(args.p_noise)
     }
 
     compute_scores(analysis, metabanalysis, method, parameters)
