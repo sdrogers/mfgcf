@@ -141,7 +141,7 @@ def load_gcf_trio(analysis,file_trio,strain_dict,gcf_duplicate_dict):
     #         BGCGCF.objects.get_or_create(bgc = bgc,gcf = gcf)
     return gcf_duplicate_dict
     
-
+# ??
 def get_strain(accession,strain_dir):
     if not accession.startswith('unknown'):
         path2files = os.path.join(strain_dir,accession+'.*')
@@ -178,6 +178,7 @@ def get_strain(accession,strain_dir):
                 
     return None
 
+# find the different bigscape files
 def get_files(bigscape_outout_dir):
     # Get the trios of files from the output dir
     file_trios = []
@@ -193,7 +194,7 @@ def get_files(bigscape_outout_dir):
     return file_trios
     
 
-
+# load mf file in gnps format
 def load_mf_file(mf_file,metabanalysis):
     mfdict = {}
     singleton_count = 0
@@ -285,10 +286,11 @@ def remove_things(analysis):
     pass
 
 if __name__ == '__main__':
+    
     analysis_name = sys.argv[1]
-    # metabanalysis_name = sys.argv[1]
-    bigscape_outout_dir = sys.argv[2]
-    # mf_file = sys.argv[2]
+    metabanalysis_name = sys.argv[1]
+    # bigscape_outout_dir = sys.argv[2]
+    mf_file = sys.argv[2]
     # strain_dir = sys.argv[4]
 
     try:
@@ -298,6 +300,7 @@ if __name__ == '__main__':
         analysis = Analysis.objects.get(name = analysis_name)
     #     remove_things(analysis)
 
+    # metabanalysis_name = sys.argv[1]
     # try:
     #     metabanalysis = MetabAnalysis.objects.create(name = metabanalysis_name)
     # except:
