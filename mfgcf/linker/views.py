@@ -64,6 +64,7 @@ def show_metabanalysis(request, metabanalysis_id):
     context_dict = {}
     context_dict['metabanalysis'] = metabanalysis
     context_dict['analyses'] = analyses
+    context_dict['mfs'] = MF.objects.filter(metabanalysis=metabanalysis).order_by('name')
 
     return render(request, 'linker/metabanalysis.html', context_dict)
 

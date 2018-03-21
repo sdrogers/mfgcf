@@ -147,13 +147,11 @@ class MF(models.Model):
     @property
     def libid(self):
         spec = [s.spectrum for s in self.spectrummf_set.all()]
-        libid = []
+        libid = set()
         for s in spec:
             if not s.libraryid == 'N/A':
-                if not libid:
-                    libid = []
-                libid.append(s.libraryid)
-        return ",".join(set(libid))
+                libid.add(s.libraryid)
+        return sorted(libid)
 
 
 class BGCStrain(models.Model):
