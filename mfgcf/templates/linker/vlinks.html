@@ -41,7 +41,15 @@
                     <tr>
                         <td>{{link.id}}</td>
                         <td><a href="/linker/showmf/{{link.mf.id}}">{{link.mf.name}}</a> ({{link.mf.metabanalysis}})</td>
-                        <td>{% for l in link.mf.libid %} {{l}} &nbsp; {%endfor%}</td>
+                        <td>
+                            {% if link.mf.libid %}
+                                <table class="libid_table">
+                                    {% for l in link.mf.libid %}
+                                        <tr><td>{{l}}</td></tr>
+                                    {% endfor %}
+                                </table>
+                            {% endif %}
+                        </td>
                         <td><a href="/linker/showgcf/{{link.gcf.id}}">{{link.gcf.name}}</a> ({{link.gcf.analysis}})</td>
                         <td>{{link.gcf.mibig}}</td>
                     </tr>
