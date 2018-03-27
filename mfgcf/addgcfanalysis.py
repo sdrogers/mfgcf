@@ -1,6 +1,7 @@
+import argparse
+import csv
 import os
 import sys
-import csv
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mfgcf.settings")
 import glob
 
@@ -34,8 +35,38 @@ GCF_TYPES2 = ['All_RiPPs',
 strain_id_file = 'strain_ids.csv'
 
 
-def load_gcf_trio(analysis, file_trio, strain_dict):
-    network_file, tsv_file, annotations_file = file_trio
+def preprocess_genbank_name(string):
+                genbank_name = string.split('_')[0]
+                if '.' in genbank_name:
+                    genbank_name = genbank_name.split('.')[0]
+                if genbank_name == 'GCA':
+                    # hack!
+                    genbank_name = '_'.join(string.split('_')[:2])
+                    genbank_name = genbank_name.split('.')[0]
+                return genbank_name
+
+
+def string_to_genbank(genbank_name):
+    strain_name = None
+    if genbank_name in strain_dict:
+        strain_name = strain_dict[genbank_name]
+    else:
+        print "{} STRAIN NOT FOUND!".format(genbank_name)
+    return strain_name
+
+
+def string_to_mibig(genbank_name):
+    mibig = None
+    # check if it is a bgc
+    try:
+        mibig = MiBIG.objects.get(name=genbank_name)
+        print "\t its from MiBIG!"
+    except:
+        pass
+    return mibig
+
+
+def load_gcf_trio(analysis, family_file, annotations_file, strain_dict, gcf_type=None):
     # This file includes the BGC info
     bgc_dict = {}
     with transaction.atomic():
@@ -51,27 +82,10 @@ def load_gcf_trio(analysis, file_trio, strain_dict):
                 bgc.bgsclass = line[4]
                 bgc.save()
                 bgc_dict[bgc.name] = bgc
-                genbank_name = bgc.name.split('_')[0]
-                if '.' in genbank_name:
-                    genbank_name = genbank_name.split('.')[0]
-                if genbank_name == 'GCA':
-                    # hack!
-                    genbank_name = '_'.join(bgc.name.split('_')[:2])
-                    genbank_name = genbank_name.split('.')[0]
-                strain_name = None
-                migbig = None
-                if genbank_name in strain_dict:
-                    strain_name = strain_dict[genbank_name]
-                else:
-                    print "{} STRAIN NOT FOUND!".format(genbank_name)
-                    # check if it is a bgc
-                    try:
-                        mibig = MiBIG.objects.get(name=genbank_name)
-                        bgc.mibig = mibig
-                        bgc.save()
-                        print "\t its from MiBIG!"
-                    except:
-                        pass
+
+                genbank_string = preprocess_genbank_name(bgc.name)
+                strain_name = string_to_genbank(genbank_string)
+
                 if strain_name is not None:
                     strain, created = Strain.objects.get_or_create(name=strain_name)
                     if created:
@@ -79,16 +93,22 @@ def load_gcf_trio(analysis, file_trio, strain_dict):
                         strain.taxonomy = line[6]
                         strain.save()
                     BGCStrain.objects.get_or_create(bgc=bgc, strain=strain)
+                else:
+                    mibig = string_to_mibig(genbank_string)
+                    if mibig is not None:
+                        bgc.mibig = mibig
+                        bgc.save()
 
     # with open(network_file,'r') as f:
     #   for line in f:
     #       print line
     #       break
-    with open(tsv_file, 'r') as f:
+    with open(family_file, 'r') as f:
         with transaction.atomic():
             reader = csv.reader(f, delimiter='\t')
             heads = reader.next()
-            gcf_type = tsv_file.split(os.sep)[-1].split('_')[0]
+            if gcf_type is None:
+                gcf_type = family_file.split(os.sep)[-1].split('_')[0]
             gcf_dict = {}
             for line in reader:
                 bgcname = line[0]
@@ -149,8 +169,17 @@ def get_strain_dict():
 
 
 if __name__ == '__main__':
-    analysis_name = sys.argv[1]
-    bigscape_outout_dir = sys.argv[2]
+    parser = argparse.ArgumentParser(description='Import GCF results into database')
+    parser.add_argument('name', help='Analysis name')
+    parser.add_argument('family', help='Family .tsv file')
+    parser.add_argument('annotations', help='BGC annotations file')
+    parser.add_argument('-t', dest='type', help='BGC type', default=None)
+    args = parser.parse_args()
+
+    analysis_name = args.name
+    family_file = args.family
+    annotations_file = args.annotations
+    bgc_type = args.type
 
     strain_dict = get_strain_dict()
 
@@ -160,9 +189,11 @@ if __name__ == '__main__':
         print "Analysis already exists"
         analysis = Analysis.objects.get(name=analysis_name)
 
-    # network file, tsv clustering file, network annotation file
-    file_trios = get_files(bigscape_outout_dir)
+    # list of (network file, tsv clustering file, network annotation file) tuples
+    # network file            - contains detailed info about the links btw. BGCs (incl. individual weights)
+    # tsv clustering file     - BGC : family pairs
+    # network annotation file - individual BGC annotations
+    # file_trios = get_files(bigscape_outout_dir)
 
-    for file_trio in file_trios:
-        print "Adding BGCs (and strains) from {}".format(file_trio[0])
-        strain_dict = load_gcf_trio(analysis, file_trio, strain_dict)
+    print "Adding BGCs (and strains) from {}".format(family_file)
+    strain_dict = load_gcf_trio(analysis, family_file, annotations_file, strain_dict, bgc_type)
