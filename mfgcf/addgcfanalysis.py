@@ -122,9 +122,6 @@ def get_files(bigscape_outout_dir):
     file_trios = []
     for i, t in enumerate(GCF_TYPES):
         network_file = glob.glob(os.path.join(bigscape_outout_dir, t + '*.network'))
-        print network_file
-        if len(network_file) > 1:
-            network_file = network_file[:1]
         if len(network_file) == 1:
             network_file = network_file[0]
             sub_name = ".".join(network_file.split(os.sep)[-1].split('.')[:-1])
