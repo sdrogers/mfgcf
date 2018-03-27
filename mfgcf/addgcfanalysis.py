@@ -30,6 +30,7 @@ GCF_TYPES2 = ['All_RiPPs',
               'All_Saccharides',
               'All_Terpene']
 
+# strain_ids.csv maps all the various ids to genbank ids
 strain_id_file = 'strain_ids.csv'
 
 
@@ -61,8 +62,6 @@ def load_gcf_trio(analysis, file_trio, strain_dict):
                 migbig = None
                 if genbank_name in strain_dict:
                     strain_name = strain_dict[genbank_name]
-                elif len(genbank_name) == 6:
-                    strain_name = genbank_name
                 else:
                     print "{} STRAIN NOT FOUND!".format(genbank_name)
                     # check if it is a bgc
@@ -104,7 +103,7 @@ def load_gcf_trio(analysis, file_trio, strain_dict):
                         # link gcftype and gcf
                         gcflink, link_created = GCFtoClass.objects.get_or_create(gcf=gcf, gcfclass=gcfclass)
                         if class_created:
-                            gcfclass.source='BIGSCAPE'
+                            gcfclass.source = 'BIGSCAPE'
                             gcfclass.save()
                         if link_created:
                             gcflink.save()
@@ -141,6 +140,10 @@ def get_strain_dict():
         reader = csv.reader(f)
         for line in reader:
             strain_dict[line[0]] = line[1]
+
+    # add null mappings (if the strain IDs are correct to begin with)
+    for strain_id in strain_dict.values():
+        strain_dict[strain_id] = strain_id
 
     return strain_dict
 
