@@ -81,6 +81,12 @@ class BGC(models.Model):
         return self.bgctomibig_set.all().order_by('-score')
 
 
+class BGCAASpecificity(models.Model):
+    bgc = models.ForeignKey(BGC, null=True)
+    aa = models.CharField(max_length=3)
+    prob = models.FloatField(null=True)
+
+
 class GCF(models.Model):
     name = models.CharField(max_length=200)
     analysis = models.ForeignKey(Analysis)
