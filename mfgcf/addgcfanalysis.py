@@ -48,71 +48,74 @@ def string_to_mibig(genbank_name):
     return mibig
 
 
+def read_csv(filename):
+    with open(filename, 'r') as f:
+        reader = csv.reader(f, delimiter='\t')
+        heads = reader.next()
+        for line in reader:
+            yield line
+
+
 def process_gcf_files(analysis, family_file, annotations_file, strain_dict, gcf_type=None, source=None):
     # This file includes the BGC info
     bgc_dict = {}
     with transaction.atomic():
-        with open(annotations_file, 'r') as f:
-            reader = csv.reader(f, delimiter='\t')
-            heads = reader.next()
-            for line in reader:
-                name = line[0]
-                bgc, _ = BGC.objects.get_or_create(name=name, analysis=analysis)
-                bgc.accession = line[1]
-                bgc.description = line[2]
-                bgc.product = line[3]
-                bgc.bgsclass = line[4]
-                bgc.save()
-                bgc_dict[bgc.name] = bgc
+        for line in read_csv(annotations_file):
+            name = line[0]
+            bgc, _ = BGC.objects.get_or_create(name=name, analysis=analysis)
+            bgc.accession = line[1]
+            bgc.description = line[2]
+            bgc.product = line[3]
+            bgc.bgsclass = line[4]
+            bgc.save()
+            bgc_dict[bgc.name] = bgc
 
-                genbank_string = preprocess_genbank_name(bgc.name)
-                strain_name = string_to_genbank(genbank_string)
+            genbank_string = preprocess_genbank_name(bgc.name)
+            strain_name = string_to_genbank(genbank_string)
 
-                if strain_name is not None:
-                    strain, created = Strain.objects.get_or_create(name=strain_name)
-                    if created:
-                        strain.organism = line[5]
-                        strain.taxonomy = line[6]
-                        strain.save()
-                    BGCStrain.objects.get_or_create(bgc=bgc, strain=strain)
+            if strain_name is not None:
+                strain, created = Strain.objects.get_or_create(name=strain_name)
+                if created:
+                    strain.organism = line[5]
+                    strain.taxonomy = line[6]
+                    strain.save()
+                BGCStrain.objects.get_or_create(bgc=bgc, strain=strain)
+            else:
+                mibig = string_to_mibig(genbank_string)
+                if mibig is not None:
+                    bgc.mibig = mibig
+                    bgc.save()
                 else:
-                    mibig = string_to_mibig(genbank_string)
-                    if mibig is not None:
-                        bgc.mibig = mibig
-                        bgc.save()
-                    else:
-                        print "Strain {} not found!".format(strain_name)
+                    print "Strain {} not found!".format(strain_name)
 
-    with open(family_file, 'r') as f:
-        with transaction.atomic():
-            reader = csv.reader(f, delimiter='\t')
-            heads = reader.next()
-            if gcf_type is None:
-                gcf_type = family_file.split(os.sep)[-1].split('_')[0]
-            gcf_dict = {}
-            for line in reader:
-                bgcname = line[0]
-                bgc = BGC.objects.get(name=bgcname, analysis=analysis)
-                family_number = line[1]
-                family_name = 'GCF_{}_{}'.format(gcf_type, family_number)
-                if family_name not in gcf_dict:
-                    gcf, created = GCF.objects.get_or_create(name=family_name, analysis=analysis)
-                    if created:
-                        # add type
-                        gcfclass, class_created = GCFClass.objects.get_or_create(name=gcf_type)
-                        # link gcftype and gcf
-                        gcflink, link_created = GCFtoClass.objects.get_or_create(gcf=gcf, gcfclass=gcfclass)
-                        if class_created:
-                            gcfclass.source = source
-                            gcfclass.save()
-                        if link_created:
-                            gcflink.save()
-                        gcf.save()
-                    gcf_dict[family_name] = gcf
-                else:
-                    gcf = gcf_dict[family_name]
+    if gcf_type is None:
+        gcf_type = family_file.split(os.sep)[-1].split('_')[0]
+    gcf_dict = {}
 
-                BGCGCF.objects.get_or_create(bgc=bgc, gcf=gcf)
+    with transaction.atomic():
+        for line in read_csv(family_file):
+            bgcname = line[0]
+            bgc = BGC.objects.get(name=bgcname, analysis=analysis)
+            family_number = line[1]
+            family_name = 'GCF_{}_{}'.format(gcf_type, family_number)
+            if family_name not in gcf_dict:
+                gcf, created = GCF.objects.get_or_create(name=family_name, analysis=analysis)
+                if created:
+                    # add type
+                    gcfclass, class_created = GCFClass.objects.get_or_create(name=gcf_type, source=source)
+                    # link gcftype and gcf
+                    gcflink, link_created = GCFtoClass.objects.get_or_create(gcf=gcf, gcfclass=gcfclass)
+                    if class_created:
+                        gcfclass.save()
+                    if link_created:
+                        gcflink.save()
+                    gcf.save()
+                gcf_dict[family_name] = gcf
+            else:
+                gcf = gcf_dict[family_name]
+
+            BGCGCF.objects.get_or_create(bgc=bgc, gcf=gcf)
+
     return strain_dict
 
 
