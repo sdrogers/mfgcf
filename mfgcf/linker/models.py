@@ -129,6 +129,7 @@ class GCFtoClass(models.Model):
 class BGCGCF(models.Model):
     bgc = models.ForeignKey(BGC)
     gcf = models.ForeignKey(GCF)
+    prob = models.FloatField(default=1.0)
 
 
 class Spectrum(models.Model):

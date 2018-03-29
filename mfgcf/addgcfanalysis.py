@@ -28,7 +28,7 @@ def preprocess_genbank_name(string):
     return genbank_name
 
 
-def string_to_genbank(genbank_name):
+def string_to_genbank(genbank_name, strain_dict):
     strain_name = None
     if genbank_name in strain_dict:
         strain_name = strain_dict[genbank_name]
@@ -56,7 +56,7 @@ def read_csv(filename):
             yield line
 
 
-def process_gcf_files(analysis, family_file, annotations_file, strain_dict, gcf_type=None, source=None):
+def process_annotations(analysis, annotations_file, strain_dict):
     # This file includes the BGC info
     bgc_dict = {}
     with transaction.atomic():
@@ -71,7 +71,7 @@ def process_gcf_files(analysis, family_file, annotations_file, strain_dict, gcf_
             bgc_dict[bgc.name] = bgc
 
             genbank_string = preprocess_genbank_name(bgc.name)
-            strain_name = string_to_genbank(genbank_string)
+            strain_name = string_to_genbank(genbank_string, strain_dict)
 
             if strain_name is not None:
                 strain, created = Strain.objects.get_or_create(name=strain_name)
@@ -88,6 +88,8 @@ def process_gcf_files(analysis, family_file, annotations_file, strain_dict, gcf_
                 else:
                     print "Strain {} not found!".format(strain_name)
 
+
+def process_families(analysis, family_file, gcf_type=None, source=None, prob=False):
     if gcf_type is None:
         gcf_type = family_file.split(os.sep)[-1].split('_')[0]
     gcf_dict = {}
@@ -114,9 +116,11 @@ def process_gcf_files(analysis, family_file, annotations_file, strain_dict, gcf_
             else:
                 gcf = gcf_dict[family_name]
 
-            BGCGCF.objects.get_or_create(bgc=bgc, gcf=gcf)
-
-    return strain_dict
+            # don't need to specify analysis - already defined by bgc/gcf
+            bgc_gcf_link, created = BGCGCF.objects.get_or_create(bgc=bgc, gcf=gcf)
+            if prob:
+                bgc_gcf_link.prob = line[2]
+            bgc_gcf_link.save()
 
 
 def get_strain_dict():
@@ -143,6 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('annotations', help='BGC annotations file')
     parser.add_argument('-t', dest='type', help='BGC type', default=None)
     parser.add_argument('-s', dest='source', help='Data source', default=None)
+    parser.add_argument('-p', dest='prob', help='Include family probabilities', default=False, action='store_true')
     args = parser.parse_args()
 
     analysis_name = args.name
@@ -150,6 +155,7 @@ if __name__ == '__main__':
     annotations_file = args.annotations
     bgc_type = args.type
     bgc_source = args.source
+    include_prob = args.prob
 
     strain_dict = get_strain_dict()
 
@@ -165,4 +171,5 @@ if __name__ == '__main__':
     # network annotation file - individual BGC annotations
 
     print "Adding BGCs (and strains) from {}".format(family_file)
-    strain_dict = process_gcf_files(analysis, family_file, annotations_file, strain_dict, bgc_type, bgc_source)
+    process_annotations(analysis, annotations_file, strain_dict)
+    process_families(analysis, family_file, bgc_type, bgc_source, include_prob)
