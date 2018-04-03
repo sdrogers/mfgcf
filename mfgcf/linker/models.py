@@ -145,6 +145,12 @@ class Spectrum(models.Model):
         return "{},{},{}".format(self.rowid, str(self.metabanalysis), self.libraryid)
 
 
+class Peak(models.Model):
+    spectrum = models.ForeignKey(Spectrum)
+    position = models.FloatField()
+    intensity = models.FloatField()
+
+
 class MF(models.Model):
     name = models.CharField(max_length=200)
     metabanalysis = models.ForeignKey(MetabAnalysis, null=True)
