@@ -151,6 +151,12 @@ class Peak(models.Model):
     intensity = models.FloatField()
 
 
+class Shift(models.Model):
+    name = models.CharField(max_length=200)
+    source = models.CharField(max_length=200)
+    shift = models.FloatField()
+
+
 class MF(models.Model):
     name = models.CharField(max_length=200)
     metabanalysis = models.ForeignKey(MetabAnalysis, null=True)

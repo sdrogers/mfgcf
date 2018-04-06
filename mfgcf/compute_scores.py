@@ -15,29 +15,29 @@ from django.db import transaction
 
 def compute_scores(analysis, metabanalysis, method, parameters):
     # find all the strains in this analysis
-    bgcs = BGC.objects.filter(analysis = analysis)
-    b_strains = set([item.strain for b in bgcs for item in b.bgcstrain_set.all()]) # assuming only one strain...
-    spectra = Spectrum.objects.filter(metabanalysis = metabanalysis)
+    bgcs = BGC.objects.filter(analysis=analysis)
+    b_strains = set([item.strain for b in bgcs for item in b.bgcstrain_set.all()])  # assuming only one strain...
+    spectra = Spectrum.objects.filter(metabanalysis=metabanalysis)
     s_strains = []
     s_strains = set([item.strain for s in spectra for item in s.spectrumstrain_set.all()])
     strains = b_strains.union(s_strains)
     print "{} strains".format(len(strains))
-    
+
     # make a mf dictionary of strain sets
     print "Extracting strain sets for MFs"
     mf_dict = {}
-    mfs = MF.objects.filter(metabanalysis = metabanalysis)
+    mfs = MF.objects.filter(metabanalysis=metabanalysis)
     # mfs = filter(lambda x: not x.name.startswith('MF_S'),mfs)
 
     for mf in mfs:
         mf_spectra = [a.spectrum for a in mf.spectrummf_set.all()]
         mf_strains = [item.strain for s in mf_spectra for item in s.spectrumstrain_set.all()]
-        mf_dict[mf] = set(mf_strains) 
+        mf_dict[mf] = set(mf_strains)
 
     # make a gcf dictionary of strain sets
     print "Extracting strain sets for GCFs"
     gcf_dict = {}
-    gcfs = GCF.objects.filter(analysis = analysis)
+    gcfs = GCF.objects.filter(analysis=analysis)
     for gcf in gcfs:
         gcf_bgc = [a.bgc for a in gcf.bgcgcf_set.all()]
         gcf_strains = [item.strain for b in gcf_bgc for item in b.bgcstrain_set.all()]
@@ -57,22 +57,112 @@ def compute_scores(analysis, metabanalysis, method, parameters):
                 # to account for (possibly) different input parameters...
                 if method == 'hypergeom':
                     threshold = parameters['threshold']
-                    a, result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
+                    value, result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
                 elif method == 'correlation':
                     threshold = parameters['threshold']
-                    a, result = correlation_test(mf_strains, gcf_strains, n_strains, threshold)
+                    value, result = correlation_test(mf_strains, gcf_strains, n_strains, threshold)
                 elif method == 'generative':
-                    a, result = generative_test(mf_strains, gcf_strains, n_strains, parameters)
+                    value, result = generative_test(mf_strains, gcf_strains, n_strains, parameters)
+                elif method == 'hg_aa':
+                    threshold = parameters['threshold']
+                    hg_value, result = hg_test(mf_strains, gcf_strains, n_strains, threshold)
+                    # Do we do this by molecular family, instead of spectrum by spectrum?
+                    # Consensus?
+                    aa_value = aa_test(mf, gcf)
+                    value = (1 - aa_value) * hg_value
                 else:
                     raise SystemExit('Unsupported scoring method: %s' % method)
+                # Success/failure is determined by the comparison algorithm itself?
+                # Is that a good idea?
                 if result:
-                    e, b = MFGCFEdge.objects.get_or_create(mf=mf, gcf=gcf,method = method)
-                    e.p = a
+                    e, b = MFGCFEdge.objects.get_or_create(mf=mf, gcf=gcf, method=method)
+                    e.p = value
                     e.save()
                     # edges.append(["MF{}".format(mf.name),"GCF{}".format(gcf.name)])
             n_mf_done += 1
             if n_mf_done % 100 == 0:
                 print "Done {} of {}".format(n_mf_done, len(mf_dict))
+
+
+def aa_test(mf, gcf):
+    # Required consensus prediction across the GCF for a prediction to be
+    # considered reliable
+    consensus_threshold = 0.75
+    # Bin size for AA detection
+    aa_sensitivity = 0.05
+
+    # If we are doing this by molecular family, AA prescence is decided by consensus
+
+    gcf_aa_probabilities = {}
+    # Get the constituent BGCs of the GCF
+    bgcs = BGC.objects.filter(bgcgcf__gcf=gcf)
+    # Get the specific edges that link the BGC to the GCF and extract the probabilities
+    edges = [x.bgcgcf_set.filter(gcf=gcf) for x in bgcs]
+    edge_probabilities = [[z.prob for z in x] for x in edges]
+
+    # add the weighted probabilities
+    bgc_prob_sum = 0
+    for bgc, bgc_prob in zip(bgcs, edge_probabilities):
+        if len(bgc_prob) != 1:
+            print 'invalid bgc prob length!'
+        bgc_prob = bgc_prob[0]
+        for aa_prob_entry in BGCAASpecificity.objects.filter(bgc=bgc):
+            aa = aa_prob_entry.aa
+            aa_prob = aa_prob_entry.prob
+            if aa in gcf_aa_probabilities:
+                gcf_aa_probabilities[aa] += bgc_prob * aa_prob
+            else:
+                gcf_aa_probabilities[aa] = bgc_prob * aa_prob
+        bgc_prob_sum += bgc_prob
+
+    for key in gcf_aa_probabilities.keys():
+        gcf_aa_probabilities[key] /= bgc_prob_sum
+
+    # Get the measured AA shifts.
+    aa_shifts = Shift.objects.filter(source='aa')
+    aa_shift_dict = dict([(x.name, x.shift) for x in aa_shifts])
+
+    # - get spectra for mf
+    # - get AAs in each spectrum
+    consensus_shifts = None
+    for spectrum in Spectrum.objects.filter(spectrummf__mf=mf):
+        peaks = Peak.objects.filter(spectrum=spectrum)
+        peak_locations = [p.position for p in peaks]
+
+        aa_in_peaks = find_shifts(peak_locations, aa_shift_dict, threshold=aa_sensitivity)
+        if consensus_shifts is None:
+            consensus_shifts = set(aa_in_peaks)
+        else:
+            consensus_shifts = consensus_shifts.intersection(aa_in_peaks)
+
+    if len(consensus_shifts) == 0:
+        score = 0.0
+    else:
+        score = 1.0
+        for aa, prob in gcf_aa_probabilities.items():
+            if prob > consensus_threshold:
+                if aa in consensus_shifts:
+                    score *= prob
+                else:
+                    score *= (1 - prob)
+        # Smooth the scoring to reflect the fact that even for a confidence
+        # score of 1.0 we don't want to completely flatten the probabilities.
+        # Scale to [0.05, 0.95]
+        score = score * 0.9 + 0.05
+
+    return score
+
+
+def find_shifts(locations, shift_dict, threshold=0.05):
+    shifts_in_spectrum = []
+    for i in xrange(len(locations)):
+        for j in xrange(i):
+            delta = locations[i] - locations[j]
+            for label, shift in shift_dict.items():
+                if abs(delta - shift) < threshold:
+                    shifts_in_spectrum.append(label)
+
+    return shifts_in_spectrum
 
 
 def generative_test(mf_strains, gcf_strains, n_strains, parameters):
