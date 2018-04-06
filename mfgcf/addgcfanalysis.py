@@ -146,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('family', help='Family .tsv file')
     parser.add_argument('annotations', help='BGC annotations file')
     parser.add_argument('-t', dest='type', help='BGC type', default=None)
-    parser.add_argument('-s', dest='source', help='Data source', default=None)
+    parser.add_argument('-s', dest='source', help='Data source', required=True)
     parser.add_argument('-p', dest='prob', help='Include family probabilities', default=False, action='store_true')
     args = parser.parse_args()
 
