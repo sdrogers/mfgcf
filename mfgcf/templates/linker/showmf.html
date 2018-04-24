@@ -2,11 +2,6 @@
 
 {% load staticfiles %}
 {% load linker_tags %}
-{% load ratings %}
-
-{% block head_block %}
-    <link rel="stylesheet" href="{% static 'star-ratings/css/star-ratings.css' %}">
-{% endblock %}
 
 {% block body_block %}
 
@@ -82,7 +77,7 @@
                         <th>Analysis</th>
                         <th>p-value</th>
                         <th>MiBIG</th>
-                        <th>Validate Links</th>
+                        <th>Validated?</th>
                     </tr>
                     {% for l in links %}
                         <tr>
@@ -97,9 +92,8 @@
                                     {% endfor %}
                                 {% endif %}
                             </td>
-                            <td>
-                                {% ratings l.0 %}
-                            </td>
+                            <td><a
+                                    href="/linker/validate_from_mf/{{ l.0.id }}">{{ l.0.validated }}</a></td>
                         </tr>
                     {% endfor %}
                 </table>
@@ -110,8 +104,4 @@
 
     </section>
 
-{% endblock %}
-
-{% block js_block %}
-    <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
 {% endblock %}
